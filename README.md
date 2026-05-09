@@ -1,8 +1,16 @@
 # Insulin Granule Demo
 
-Live demo: https://do-shima.github.io/insulin-granule-demo/
-
 A schematic two-scale Three.js demo of insulin granule behavior and vascular-facing beta-cell polarity.
+
+## Live Demo Links
+
+- Full demo: https://do-shima.github.io/insulin-granule-demo/
+- Guided story: https://do-shima.github.io/insulin-granule-demo/?story=1
+- Single-cell overview: https://do-shima.github.io/insulin-granule-demo/?mode=singleCell
+- Multicell vascular polarity: https://do-shima.github.io/insulin-granule-demo/?mode=multicellVascular
+- Capillary-facing polarity story step: https://do-shima.github.io/insulin-granule-demo/?story=7
+- Vascular-facing release events: https://do-shima.github.io/insulin-granule-demo/?story=8
+- Presentation mode: https://do-shima.github.io/insulin-granule-demo/?story=7&presentation=1
 
 ## Screenshots
 
