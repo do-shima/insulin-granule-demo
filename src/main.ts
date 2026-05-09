@@ -11,6 +11,7 @@ import { ExocytosisSystem } from './objects/ExocytosisSystem';
 import { GranuleSystem } from './objects/GranuleSystem';
 import { Mitochondria } from './objects/Mitochondria';
 import { MicrotubuleNetwork } from './objects/MicrotubuleNetwork';
+import { MulticellVascularPlaceholder } from './objects/MulticellVascularPlaceholder';
 import { SchematicLabels } from './objects/SchematicLabels';
 import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
@@ -31,38 +32,45 @@ import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyM
 
 const { scene, camera, renderer, controls } = createSceneContext(getAppMount());
 
-scene.add(createBetaCellShell());
-scene.add(createNucleus());
-scene.add(createGolgiRegion());
-scene.add(createMembraneRing());
-scene.add(createSecretionPoleMarker());
+const singleCellGroup = new THREE.Group();
+singleCellGroup.name = 'Single-cell granule demo';
+scene.add(singleCellGroup);
+
+singleCellGroup.add(createBetaCellShell());
+singleCellGroup.add(createNucleus());
+singleCellGroup.add(createGolgiRegion());
+singleCellGroup.add(createMembraneRing());
+singleCellGroup.add(createSecretionPoleMarker());
 
 const endoplasmicReticulum = new EndoplasmicReticulum();
-scene.add(endoplasmicReticulum);
+singleCellGroup.add(endoplasmicReticulum);
 
 const mitochondria = new Mitochondria();
-scene.add(mitochondria);
+singleCellGroup.add(mitochondria);
 
 const calciumField = new CalciumField();
-scene.add(calciumField);
+singleCellGroup.add(calciumField);
 
 const microtubules = new MicrotubuleNetwork();
-scene.add(microtubules);
+singleCellGroup.add(microtubules);
 
 const exocytosis = new ExocytosisSystem();
-scene.add(exocytosis);
+singleCellGroup.add(exocytosis);
 
 const fusionEventCounter = new FusionEventCounter();
 
 const labels = new SchematicLabels();
-scene.add(labels);
+singleCellGroup.add(labels);
 
 const granules = new GranuleSystem(undefined, microtubules);
 granules.setExocytosisEventHandler((event) => {
   fusionEventCounter.recordEvent();
   exocytosis.trigger(event);
 });
-scene.add(granules);
+singleCellGroup.add(granules);
+
+const multicellPlaceholder = new MulticellVascularPlaceholder();
+scene.add(multicellPlaceholder);
 
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
@@ -72,6 +80,10 @@ const sceneState = createSceneStateController(defaultSceneState);
 let animationSpeed = sceneState.getState().animationSpeed;
 
 function applySceneState(state: Readonly<SceneState>): void {
+  const isSingleCellMode = state.demoMode === 'singleCell';
+
+  singleCellGroup.visible = isSingleCellMode;
+  multicellPlaceholder.visible = state.demoMode === 'multicellVascular';
   granules.setStimulationLevel(state.calciumStimulation);
   calciumField.setStimulationLevel(state.calciumStimulation);
   endoplasmicReticulum.visible = state.showEr;
@@ -85,6 +97,12 @@ function applySceneState(state: Readonly<SceneState>): void {
 }
 
 const sceneControls = createSceneControls(sceneState.getState(), {
+  onDemoModeChange: (value) => {
+    sceneState.setState({ demoMode: value });
+    if (value === 'multicellVascular') {
+      applyCameraPreset('overview');
+    }
+  },
   onCalciumStimulationChange: (value) => sceneState.setState({ calciumStimulation: value }),
   onShowErChange: (value) => sceneState.setState({ showEr: value }),
   onShowMitochondriaChange: (value) => sceneState.setState({ showMitochondria: value }),

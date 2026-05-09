@@ -1,5 +1,5 @@
 import type { GranuleStateCounts } from '../biology/granuleStates';
-import type { SceneState } from '../state/sceneState';
+import type { DemoMode, SceneState } from '../state/sceneState';
 import type { FusionEventCounts } from './fusionEventCounter';
 
 const stateDisplayRows = [
@@ -48,6 +48,7 @@ export type SceneControlValues = SceneState;
 export type CameraPresetId = 'overview' | 'secretionPole' | 'transport';
 
 export interface SceneControlCallbacks {
+  onDemoModeChange: (value: DemoMode) => void;
   onCalciumStimulationChange: (value: number) => void;
   onShowErChange: (value: boolean) => void;
   onShowMitochondriaChange: (value: boolean) => void;
@@ -141,6 +142,10 @@ export function createSceneControls(
   panel.className = 'scene-controls';
   const { body } = createCollapsiblePanel(panel, 'Schematic controls', shouldCollapsePanelsByDefault());
 
+  const modeControl = createModeControl({
+    value: initialValues.demoMode,
+    onChange: callbacks.onDemoModeChange
+  });
   const calciumControl = createRangeControl({
     label: 'Calcium stimulation',
     min: 0,
@@ -197,6 +202,7 @@ export function createSceneControls(
   });
 
   body.append(
+    modeControl.element,
     calciumControl.element,
     erControl.element,
     mitochondriaControl.element,
@@ -229,6 +235,7 @@ export function createSceneControls(
   return {
     element: panel,
     updateValues: (values) => {
+      modeControl.setValue(values.demoMode);
       calciumControl.setValue(values.calciumStimulation);
       erControl.setValue(values.showEr);
       mitochondriaControl.setValue(values.showMitochondria);
@@ -280,6 +287,67 @@ export function createCollapsiblePanel(
 
 export function shouldCollapsePanelsByDefault(): boolean {
   return window.matchMedia('(max-width: 760px)').matches;
+}
+
+interface ModeControlOptions {
+  value: DemoMode;
+  onChange: (value: DemoMode) => void;
+}
+
+interface ModeControl {
+  element: HTMLDivElement;
+  setValue: (value: DemoMode) => void;
+}
+
+function createModeControl(options: ModeControlOptions): ModeControl {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'scene-mode-control';
+
+  const label = document.createElement('div');
+  label.className = 'scene-mode-label';
+  label.textContent = 'Demo mode';
+
+  const buttonGroup = document.createElement('div');
+  buttonGroup.className = 'scene-mode-buttons';
+
+  const singleCellButton = createModeButton('Single-cell granule demo', 'singleCell', options.onChange);
+  const multicellButton = createModeButton(
+    'Multicell vascular polarity demo',
+    'multicellVascular',
+    options.onChange
+  );
+  buttonGroup.append(singleCellButton, multicellButton);
+  wrapper.append(label, buttonGroup);
+
+  function setValue(value: DemoMode): void {
+    singleCellButton.classList.toggle('is-active', value === 'singleCell');
+    multicellButton.classList.toggle('is-active', value === 'multicellVascular');
+    singleCellButton.setAttribute('aria-pressed', String(value === 'singleCell'));
+    multicellButton.setAttribute('aria-pressed', String(value === 'multicellVascular'));
+  }
+
+  setValue(options.value);
+
+  return {
+    element: wrapper,
+    setValue
+  };
+}
+
+function createModeButton(
+  label: string,
+  value: DemoMode,
+  onChange: (value: DemoMode) => void
+): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'scene-mode-button';
+  button.textContent = label;
+  button.addEventListener('click', () => {
+    onChange(value);
+  });
+
+  return button;
 }
 
 interface RangeControlOptions {

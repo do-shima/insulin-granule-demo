@@ -18,6 +18,7 @@ export const storySteps: StoryStep[] = [
     title: '1. Overview',
     cameraPreset: 'overview',
     settings: {
+      demoMode: 'singleCell',
       calciumStimulation: 0.15,
       showLabels: true,
       showMicrotubules: true,
@@ -32,6 +33,7 @@ export const storySteps: StoryStep[] = [
     title: '2. Granule Maturation Near Golgi',
     cameraPreset: 'transport',
     settings: {
+      demoMode: 'singleCell',
       calciumStimulation: 0.15,
       showLabels: true,
       showMicrotubules: true,
@@ -46,6 +48,7 @@ export const storySteps: StoryStep[] = [
     title: '3. Microtubule-Associated Transport',
     cameraPreset: 'transport',
     settings: {
+      demoMode: 'singleCell',
       calciumStimulation: 0.2,
       showLabels: true,
       showMicrotubules: true,
@@ -60,6 +63,7 @@ export const storySteps: StoryStep[] = [
     title: '4. Docking And Priming',
     cameraPreset: 'secretionPole',
     settings: {
+      demoMode: 'singleCell',
       calciumStimulation: 0.25,
       showLabels: true,
       showMicrotubules: true,
@@ -74,6 +78,7 @@ export const storySteps: StoryStep[] = [
     title: '5. Calcium-Triggered Exocytosis',
     cameraPreset: 'secretionPole',
     settings: {
+      demoMode: 'singleCell',
       calciumStimulation: 0.85,
       showLabels: true,
       showMicrotubules: true,

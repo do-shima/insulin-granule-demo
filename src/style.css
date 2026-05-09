@@ -172,6 +172,44 @@ canvas {
   margin-top: 8px;
 }
 
+.scene-mode-control {
+  display: grid;
+  gap: 6px;
+}
+
+.scene-mode-label {
+  color: rgba(165, 243, 252, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scene-mode-buttons {
+  display: grid;
+  gap: 6px;
+}
+
+.scene-mode-button {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid rgba(180, 210, 255, 0.34);
+  border-radius: 8px;
+  background: rgba(20, 33, 58, 0.62);
+  color: rgba(230, 240, 255, 0.88);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scene-mode-button.is-active {
+  border-color: rgba(103, 232, 249, 0.78);
+  background: rgba(18, 70, 92, 0.82);
+  color: rgba(240, 253, 250, 0.98);
+}
+
+.scene-mode-button:hover {
+  background: rgba(35, 55, 88, 0.88);
+}
+
 .scene-control-range {
   grid-template-columns: 1fr auto;
   align-items: center;

@@ -1,4 +1,7 @@
+export type DemoMode = 'singleCell' | 'multicellVascular';
+
 export interface SceneState {
+  demoMode: DemoMode;
   calciumStimulation: number;
   showEr: boolean;
   showMitochondria: boolean;
@@ -19,6 +22,7 @@ export interface SceneStateController {
 }
 
 export const defaultSceneState: SceneState = {
+  demoMode: 'singleCell',
   calciumStimulation: 0.15,
   showEr: true,
   showMitochondria: true,
