@@ -127,3 +127,57 @@ canvas {
 .scene-control-button:hover {
   background: rgba(35, 55, 88, 0.88);
 }
+
+.story-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 16px;
+  width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 210, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(5, 8, 18, 0.76);
+  color: rgba(230, 240, 255, 0.94);
+  font-size: 13px;
+  line-height: 1.45;
+  backdrop-filter: blur(8px);
+}
+
+.story-eyebrow {
+  color: rgba(165, 243, 252, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.story-title {
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+.story-text {
+  margin: 7px 0 8px;
+}
+
+.story-counter {
+  color: rgba(230, 240, 255, 0.68);
+  font-variant-numeric: tabular-nums;
+}
+
+.story-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.story-button {
+  margin-top: 0;
+  padding-inline: 6px;
+  text-align: center;
+}
+
+.story-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}

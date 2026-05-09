@@ -23,6 +23,7 @@ import {
   createSceneNote,
   getAppMount
 } from './utils/dom';
+import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyMode';
 
 const { scene, camera, renderer, controls } = createSceneContext(getAppMount());
 
@@ -55,6 +56,35 @@ const sceneInfo = createSceneInfo(granules.getCount());
 sceneInfo.updateStateCounts(granules.getStateCounts());
 let animationSpeed = 1;
 
+function setCalciumStimulation(value: number): void {
+  granules.setStimulationLevel(value);
+  calciumField.setStimulationLevel(value);
+}
+
+function setMicrotubulesVisible(value: boolean): void {
+  microtubules.visible = value;
+}
+
+function setMicrotubuleOpacity(value: number): void {
+  microtubules.setOpacity(value);
+}
+
+function setCalciumFieldVisible(value: boolean): void {
+  calciumField.visible = value;
+}
+
+function setExocytosisParticlesVisible(value: boolean): void {
+  exocytosis.setParticlesVisible(value);
+}
+
+function setLabelsVisible(value: boolean): void {
+  labels.setLabelsVisible(value);
+}
+
+function setAnimationSpeed(value: number): void {
+  animationSpeed = value;
+}
+
 createSceneControls({
   calciumStimulation: 0.15,
   showMicrotubules: true,
@@ -64,28 +94,13 @@ createSceneControls({
   showLabels: true,
   animationSpeed
 }, {
-  onCalciumStimulationChange: (value) => {
-    granules.setStimulationLevel(value);
-    calciumField.setStimulationLevel(value);
-  },
-  onShowMicrotubulesChange: (value) => {
-    microtubules.visible = value;
-  },
-  onMicrotubuleOpacityChange: (value) => {
-    microtubules.setOpacity(value);
-  },
-  onShowCalciumFieldChange: (value) => {
-    calciumField.visible = value;
-  },
-  onShowExocytosisParticlesChange: (value) => {
-    exocytosis.setParticlesVisible(value);
-  },
-  onShowLabelsChange: (value) => {
-    labels.setLabelsVisible(value);
-  },
-  onAnimationSpeedChange: (value) => {
-    animationSpeed = value;
-  },
+  onCalciumStimulationChange: setCalciumStimulation,
+  onShowMicrotubulesChange: setMicrotubulesVisible,
+  onMicrotubuleOpacityChange: setMicrotubuleOpacity,
+  onShowCalciumFieldChange: setCalciumFieldVisible,
+  onShowExocytosisParticlesChange: setExocytosisParticlesVisible,
+  onShowLabelsChange: setLabelsVisible,
+  onAnimationSpeedChange: setAnimationSpeed,
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
   },
@@ -96,8 +111,42 @@ createSceneControls({
   }
 });
 
+createStoryModePanel(storySteps, applyStoryStep);
+
 const clock = new THREE.Clock();
 let statusElapsed = 0;
+
+function applyStoryStep(step: StoryStep): void {
+  if (step.settings.calciumStimulation !== undefined) {
+    setCalciumStimulation(step.settings.calciumStimulation);
+  }
+
+  if (step.settings.showMicrotubules !== undefined) {
+    setMicrotubulesVisible(step.settings.showMicrotubules);
+  }
+
+  if (step.settings.microtubuleOpacity !== undefined) {
+    setMicrotubuleOpacity(step.settings.microtubuleOpacity);
+  }
+
+  if (step.settings.showCalciumField !== undefined) {
+    setCalciumFieldVisible(step.settings.showCalciumField);
+  }
+
+  if (step.settings.showExocytosisParticles !== undefined) {
+    setExocytosisParticlesVisible(step.settings.showExocytosisParticles);
+  }
+
+  if (step.settings.showLabels !== undefined) {
+    setLabelsVisible(step.settings.showLabels);
+  }
+
+  if (step.settings.animationSpeed !== undefined) {
+    setAnimationSpeed(step.settings.animationSpeed);
+  }
+
+  applyCameraPreset(step.cameraPreset);
+}
 
 function applyCameraPreset(preset: CameraPresetId): void {
   switch (preset) {
