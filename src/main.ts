@@ -40,6 +40,7 @@ import {
 } from './utils/dom';
 import { FusionEventCounter } from './utils/fusionEventCounter';
 import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyMode';
+import { createWelcomeOverlay } from './utils/welcomeOverlay';
 
 const { scene, camera, renderer, controls } = createSceneContext(getAppMount());
 
@@ -223,7 +224,34 @@ sceneState.subscribe((state) => {
   updateSceneInfo();
 });
 
-createStoryModePanel(storySteps, applyStoryStep);
+const storyPanel = createStoryModePanel(storySteps, applyStoryStep);
+
+createWelcomeOverlay({
+  onStartStory: () => {
+    storyPanel.applyStep(0);
+  },
+  onOpenSingleCell: () => {
+    sceneState.setState({
+      demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
+      showLabels: true,
+      calciumStimulation: 0.15
+    });
+    applyCameraPreset('overview');
+  },
+  onOpenMulticell: () => {
+    sceneState.setState({
+      demoMode: 'multicellVascular',
+      openedSelectedCellDetail: false,
+      showLabels: true,
+      calciumStimulation: 0.15,
+      showVascularContactPatches: true,
+      showPolarityVectors: true,
+      showMulticellReleaseParticles: false
+    });
+    applyCameraPreset('multicellOverview');
+  }
+});
 
 const clock = new THREE.Clock();
 let statusElapsed = 0;

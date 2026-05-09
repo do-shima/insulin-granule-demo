@@ -1,7 +1,10 @@
 import type { SceneState } from '../state/sceneState';
 import { createCollapsiblePanel, shouldCollapsePanelsByDefault, type CameraPresetId } from './dom';
 
+export type StorySection = 'Single-cell granule demo' | 'Multicell vascular polarity demo';
+
 export interface StoryStep {
+  readonly section: StorySection;
   readonly title: string;
   readonly text: string;
   readonly cameraPreset: CameraPresetId;
@@ -15,6 +18,7 @@ export interface StoryModePanel {
 
 export const storySteps: StoryStep[] = [
   {
+    section: 'Single-cell granule demo',
     title: '1. Overview',
     cameraPreset: 'overview',
     settings: {
@@ -31,6 +35,7 @@ export const storySteps: StoryStep[] = [
       'A schematic pancreatic beta cell contains insulin secretory granules, a nucleus, Golgi region, microtubules, and a secretion pole.'
   },
   {
+    section: 'Single-cell granule demo',
     title: '2. Granule Maturation Near Golgi',
     cameraPreset: 'transport',
     settings: {
@@ -47,6 +52,7 @@ export const storySteps: StoryStep[] = [
       'New insulin granules are represented near the Golgi region before joining the mature granule pool.'
   },
   {
+    section: 'Single-cell granule demo',
     title: '3. Microtubule-Associated Transport',
     cameraPreset: 'transport',
     settings: {
@@ -63,6 +69,7 @@ export const storySteps: StoryStep[] = [
       'A subset of mature granules moves along schematic microtubule-like paths toward the cell periphery.'
   },
   {
+    section: 'Single-cell granule demo',
     title: '4. Docking And Priming',
     cameraPreset: 'secretionPole',
     settings: {
@@ -79,6 +86,7 @@ export const storySteps: StoryStep[] = [
       'Some granules dock and prime near a schematic secretion domain at the plasma membrane.'
   },
   {
+    section: 'Single-cell granule demo',
     title: '5. Calcium-Triggered Exocytosis',
     cameraPreset: 'secretionPole',
     settings: {
@@ -95,6 +103,7 @@ export const storySteps: StoryStep[] = [
       'In this demo, increasing calcium stimulation increases the probability of schematic fusion events and signal particle release.'
   },
   {
+    section: 'Multicell vascular polarity demo',
     title: '6. Multicell Islet-Scale View',
     cameraPreset: 'multicellOverview',
     settings: {
@@ -107,9 +116,10 @@ export const storySteps: StoryStep[] = [
       showMulticellReleaseParticles: false
     },
     text:
-      'The demo switches to a schematic multicell beta-cell cluster arranged around a simplified capillary network.'
+      'The next steps zoom out from one beta cell to a schematic multicell vascular context. The demo switches to a schematic multicell beta-cell cluster arranged around a simplified capillary network.'
   },
   {
+    section: 'Multicell vascular polarity demo',
     title: '7. Capillary-Facing Beta-Cell Polarity',
     cameraPreset: 'capillaryPolarity',
     settings: {
@@ -125,6 +135,7 @@ export const storySteps: StoryStep[] = [
       'Polarity vectors are drawn from each cell toward its schematic capillary contact, marking a vascular-facing basal domain.'
   },
   {
+    section: 'Multicell vascular polarity demo',
     title: '8. Vascular-Facing Schematic Release Events',
     cameraPreset: 'vascularRelease',
     settings: {
@@ -149,6 +160,9 @@ export function createStoryModePanel(
   panel.className = 'story-panel';
   const { body } = createCollapsiblePanel(panel, 'Guided story', shouldCollapsePanelsByDefault());
 
+  const section = document.createElement('div');
+  section.className = 'story-section';
+
   const title = document.createElement('div');
   title.className = 'story-title';
 
@@ -169,7 +183,7 @@ export function createStoryModePanel(
   const playButton = createStoryButton('Play');
   const nextButton = createStoryButton('Next');
   controls.append(previousButton, playButton, nextButton);
-  body.append(title, text, caveat, stepCounter, controls);
+  body.append(section, title, text, caveat, stepCounter, controls);
   document.body.appendChild(panel);
 
   let currentIndex = 0;
@@ -178,6 +192,7 @@ export function createStoryModePanel(
   function render(): void {
     const step = steps[currentIndex];
 
+    section.textContent = step.section;
     title.textContent = step.title;
     text.textContent = step.text;
     stepCounter.textContent = `${currentIndex + 1} / ${steps.length}`;

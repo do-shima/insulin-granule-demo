@@ -1,8 +1,8 @@
 # Insulin Granule Demo
 
-A schematic Three.js visualization of insulin secretory granules maturing, transporting, docking, priming, and fusing in a simplified pancreatic beta-cell.
-
 Live demo: https://do-shima.github.io/insulin-granule-demo/
+
+A schematic two-scale Three.js demo of insulin granule behavior and vascular-facing beta-cell polarity.
 
 ## Screenshot
 
@@ -18,17 +18,22 @@ npm run build
 
 ## Biological Narrative
 
-1. Insulin granules mature near the Golgi region.
-2. A subset undergoes transport along schematic microtubule-like paths.
-3. Granules dock and prime near the plasma membrane, with a schematic secretion-pole region.
-4. Calcium stimulation increases fusion probability.
-5. Fusion events release schematic insulin signal particles.
+The demo has two visualization modes:
+
+1. Single-cell insulin granule demo: granules mature near the Golgi region, transport along schematic microtubule-like paths, dock and prime near a secretion pole, and produce schematic fusion events.
+2. Multicell vascular polarity demo: beta-cell-like ellipsoids are arranged near a schematic capillary network with vascular-facing polarity vectors, contact patches, and schematic release particles.
 
 ## Implemented Features
 
 - Guided story mode
+- Mode switch between single-cell and multicell demos
 - Visual control panel
 - Toggleable schematic labels and camera presets
+- Selected beta-cell highlight
+- Bridge from multicell view to single-cell detail
+- Vascular-facing polarity vectors
+- Vascular contact patches
+- Schematic multicell release particles
 - Schematic ER and mitochondria
 - Schematic fusion event counter
 - Demo-only scientific disclaimer
@@ -55,5 +60,7 @@ Educational demo only. This visualization does not represent real insulin secret
 
 ## Future Work
 
-- Blender GLB organelles
-- Secretion-pole refinement
+- Blender/GLB visual assets
+- Optional performance tuning
+- Optional screenshot export
+- Optional educational labels refinement
