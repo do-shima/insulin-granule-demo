@@ -6,13 +6,18 @@ import {
 } from './biology/betaCellGeometry';
 import { cellRadii, secretionPoleDirection } from './biology/betaCellModel';
 import { CalciumField } from './objects/CalciumField';
+import { CapillaryNetwork } from './objects/CapillaryNetwork';
 import { EndoplasmicReticulum } from './objects/EndoplasmicReticulum';
 import { ExocytosisSystem } from './objects/ExocytosisSystem';
 import { GranuleSystem } from './objects/GranuleSystem';
+import { IsletCellCluster } from './objects/IsletCellCluster';
 import { Mitochondria } from './objects/Mitochondria';
 import { MicrotubuleNetwork } from './objects/MicrotubuleNetwork';
 import { MulticellVascularPlaceholder } from './objects/MulticellVascularPlaceholder';
+import { MulticellReleaseParticles } from './objects/MulticellReleaseParticles';
+import { PolarityVectorField } from './objects/PolarityVectorField';
 import { SchematicLabels } from './objects/SchematicLabels';
+import { VascularContactPatches } from './objects/VascularContactPatches';
 import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
 import { createMembraneRing } from './objects/membraneRing';
@@ -58,6 +63,7 @@ const exocytosis = new ExocytosisSystem();
 singleCellGroup.add(exocytosis);
 
 const fusionEventCounter = new FusionEventCounter();
+const multicellReleaseEventCounter = new FusionEventCounter();
 
 const labels = new SchematicLabels();
 singleCellGroup.add(labels);
@@ -70,22 +76,42 @@ granules.setExocytosisEventHandler((event) => {
 singleCellGroup.add(granules);
 
 const multicellPlaceholder = new MulticellVascularPlaceholder();
+const capillaryNetwork = new CapillaryNetwork();
+const isletCellCluster = new IsletCellCluster(capillaryNetwork);
+const vascularContactPatches = new VascularContactPatches(isletCellCluster.getCells());
+const polarityVectorField = new PolarityVectorField(isletCellCluster.getCells());
+const multicellReleaseParticles = new MulticellReleaseParticles(isletCellCluster.getCells());
+multicellReleaseParticles.setEventHandler(() => {
+  multicellReleaseEventCounter.recordEvent();
+});
+multicellPlaceholder.add(isletCellCluster);
+multicellPlaceholder.add(vascularContactPatches);
+multicellPlaceholder.add(polarityVectorField);
+multicellPlaceholder.add(multicellReleaseParticles);
+multicellPlaceholder.add(capillaryNetwork);
 scene.add(multicellPlaceholder);
 
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
-sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
+sceneInfo.updateCounts(
+  granules.getStateCounts(),
+  fusionEventCounter.getCounts(),
+  multicellReleaseEventCounter.getCounts()
+);
 
 const sceneState = createSceneStateController(defaultSceneState);
 let animationSpeed = sceneState.getState().animationSpeed;
+let isMulticellMode = sceneState.getState().demoMode === 'multicellVascular';
 
 function applySceneState(state: Readonly<SceneState>): void {
   const isSingleCellMode = state.demoMode === 'singleCell';
 
   singleCellGroup.visible = isSingleCellMode;
   multicellPlaceholder.visible = state.demoMode === 'multicellVascular';
+  isMulticellMode = state.demoMode === 'multicellVascular';
   granules.setStimulationLevel(state.calciumStimulation);
   calciumField.setStimulationLevel(state.calciumStimulation);
+  multicellReleaseParticles.setStimulationLevel(state.calciumStimulation);
   endoplasmicReticulum.visible = state.showEr;
   mitochondria.visible = state.showMitochondria;
   microtubules.visible = state.showMicrotubules;
@@ -93,6 +119,13 @@ function applySceneState(state: Readonly<SceneState>): void {
   calciumField.visible = state.showCalciumField;
   exocytosis.setParticlesVisible(state.showExocytosisParticles);
   labels.setLabelsVisible(state.showLabels);
+  capillaryNetwork.setLabelsVisible(state.showLabels);
+  vascularContactPatches.setPatchesVisible(state.showVascularContactPatches);
+  vascularContactPatches.setReleaseParticlesVisible(state.showMulticellReleaseParticles);
+  vascularContactPatches.setLabelsVisible(state.showLabels);
+  polarityVectorField.setVectorsVisible(state.showPolarityVectors);
+  polarityVectorField.setLabelsVisible(state.showLabels);
+  multicellReleaseParticles.setParticlesVisible(state.showMulticellReleaseParticles);
   animationSpeed = state.animationSpeed;
 }
 
@@ -111,6 +144,9 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onShowCalciumFieldChange: (value) => sceneState.setState({ showCalciumField: value }),
   onShowExocytosisParticlesChange: (value) => sceneState.setState({ showExocytosisParticles: value }),
   onShowLabelsChange: (value) => sceneState.setState({ showLabels: value }),
+  onShowVascularContactPatchesChange: (value) => sceneState.setState({ showVascularContactPatches: value }),
+  onShowPolarityVectorsChange: (value) => sceneState.setState({ showPolarityVectors: value }),
+  onShowMulticellReleaseParticlesChange: (value) => sceneState.setState({ showMulticellReleaseParticles: value }),
   onAnimationSpeedChange: (value) => sceneState.setState({ animationSpeed: value }),
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
@@ -118,8 +154,14 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onResetGranules: () => {
     granules.reset();
     fusionEventCounter.reset();
+    multicellReleaseEventCounter.reset();
     exocytosis.resetEffects();
-    sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
+    multicellReleaseParticles.resetEffects();
+    sceneInfo.updateCounts(
+      granules.getStateCounts(),
+      fusionEventCounter.getCounts(),
+      multicellReleaseEventCounter.getCounts()
+    );
   }
 });
 
@@ -171,9 +213,17 @@ function animate(): void {
   granules.update(sceneDeltaTime);
   calciumField.update(sceneDeltaTime);
   fusionEventCounter.update(sceneDeltaTime);
+  multicellReleaseEventCounter.update(sceneDeltaTime);
   exocytosis.update(sceneDeltaTime);
+  if (isMulticellMode) {
+    multicellReleaseParticles.update(sceneDeltaTime);
+  }
   if (statusElapsed >= 0.5) {
-    sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
+    sceneInfo.updateCounts(
+      granules.getStateCounts(),
+      fusionEventCounter.getCounts(),
+      multicellReleaseEventCounter.getCounts()
+    );
     statusElapsed = 0;
   }
 

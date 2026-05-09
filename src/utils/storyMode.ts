@@ -88,6 +88,48 @@ export const storySteps: StoryStep[] = [
     },
     text:
       'In this demo, increasing calcium stimulation increases the probability of schematic fusion events and signal particle release.'
+  },
+  {
+    title: '6. Multicell Islet-Scale View',
+    cameraPreset: 'overview',
+    settings: {
+      demoMode: 'multicellVascular',
+      calciumStimulation: 0.15,
+      showLabels: true,
+      showVascularContactPatches: false,
+      showPolarityVectors: false,
+      showMulticellReleaseParticles: false
+    },
+    text:
+      'The demo switches to a schematic multicell beta-cell cluster arranged around a simplified capillary network.'
+  },
+  {
+    title: '7. Capillary-Facing Beta-Cell Polarity',
+    cameraPreset: 'overview',
+    settings: {
+      demoMode: 'multicellVascular',
+      calciumStimulation: 0.2,
+      showLabels: true,
+      showVascularContactPatches: true,
+      showPolarityVectors: true,
+      showMulticellReleaseParticles: false
+    },
+    text:
+      'Polarity vectors are drawn from each cell toward its schematic capillary contact, marking a vascular-facing basal domain.'
+  },
+  {
+    title: '8. Vascular-Facing Schematic Release Events',
+    cameraPreset: 'overview',
+    settings: {
+      demoMode: 'multicellVascular',
+      calciumStimulation: 0.85,
+      showLabels: true,
+      showVascularContactPatches: true,
+      showPolarityVectors: true,
+      showMulticellReleaseParticles: true
+    },
+    text:
+      'In this demo, higher calcium stimulation increases schematic release events biased toward the capillary; this is not real secretion kinetics.'
   }
 ];
 

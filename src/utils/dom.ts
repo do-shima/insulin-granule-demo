@@ -40,7 +40,11 @@ export function createSceneNote(): HTMLDivElement {
 
 export interface SceneInfoPanel {
   element: HTMLDivElement;
-  updateCounts: (stateCounts: GranuleStateCounts, fusionEvents: FusionEventCounts) => void;
+  updateCounts: (
+    stateCounts: GranuleStateCounts,
+    fusionEvents: FusionEventCounts,
+    multicellReleaseEvents: FusionEventCounts
+  ) => void;
 }
 
 export type SceneControlValues = SceneState;
@@ -57,6 +61,9 @@ export interface SceneControlCallbacks {
   onShowCalciumFieldChange: (value: boolean) => void;
   onShowExocytosisParticlesChange: (value: boolean) => void;
   onShowLabelsChange: (value: boolean) => void;
+  onShowVascularContactPatchesChange: (value: boolean) => void;
+  onShowPolarityVectorsChange: (value: boolean) => void;
+  onShowMulticellReleaseParticlesChange: (value: boolean) => void;
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
   onResetGranules: () => void;
@@ -72,7 +79,11 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   info.className = 'scene-info';
   const { body } = createCollapsiblePanel(info, 'Insulin secretory granules', shouldCollapsePanelsByDefault());
 
-  function updateCounts(counts: GranuleStateCounts, fusionEvents: FusionEventCounts): void {
+  function updateCounts(
+    counts: GranuleStateCounts,
+    fusionEvents: FusionEventCounts,
+    multicellReleaseEvents: FusionEventCounts
+  ): void {
     const accounted =
       counts.immature +
       counts.mature +
@@ -93,13 +104,17 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   <div class="state-counts-title">Schematic fusion events</div>
   <div>Total schematic fusion events: ${fusionEvents.total}</div>
   <div>Events in last 10 seconds: ${fusionEvents.recent}</div>
+  <div class="state-counts-title">Schematic multicell release events</div>
+  <div>Total schematic release events: ${multicellReleaseEvents.total}</div>
+  <div>Events in last 10 seconds: ${multicellReleaseEvents.recent}</div>
+  <div class="scene-info-caveat">Events show a vascular-facing bias for demo purposes, not measured secretion.</div>
   <div class="state-counts-title">Schematic granule states</div>
   <div class="scene-info-caveat">State counts are visual demo states, not measured biological counts.</div>
   <div class="state-counts">${stateRows}</div>
 `;
   }
 
-  updateCounts(createZeroStateCounts(), { total: 0, recent: 0 });
+  updateCounts(createZeroStateCounts(), { total: 0, recent: 0 }, { total: 0, recent: 0 });
   document.body.appendChild(info);
 
   return {
@@ -192,6 +207,21 @@ export function createSceneControls(
     checked: initialValues.showLabels,
     onChange: callbacks.onShowLabelsChange
   });
+  const vascularContactPatchesControl = createCheckboxControl({
+    label: 'Show vascular contact patches',
+    checked: initialValues.showVascularContactPatches,
+    onChange: callbacks.onShowVascularContactPatchesChange
+  });
+  const polarityVectorsControl = createCheckboxControl({
+    label: 'Show polarity vectors',
+    checked: initialValues.showPolarityVectors,
+    onChange: callbacks.onShowPolarityVectorsChange
+  });
+  const multicellReleaseParticlesControl = createCheckboxControl({
+    label: 'Show multicell release particles',
+    checked: initialValues.showMulticellReleaseParticles,
+    onChange: callbacks.onShowMulticellReleaseParticlesChange
+  });
   const animationSpeedControl = createRangeControl({
     label: 'Animation speed',
     min: 0.1,
@@ -211,6 +241,9 @@ export function createSceneControls(
     calciumFieldControl.element,
     exocytosisParticlesControl.element,
     labelsControl.element,
+    vascularContactPatchesControl.element,
+    polarityVectorsControl.element,
+    multicellReleaseParticlesControl.element,
     animationSpeedControl.element
   );
 
@@ -244,6 +277,9 @@ export function createSceneControls(
       calciumFieldControl.setValue(values.showCalciumField);
       exocytosisParticlesControl.setValue(values.showExocytosisParticles);
       labelsControl.setValue(values.showLabels);
+      vascularContactPatchesControl.setValue(values.showVascularContactPatches);
+      polarityVectorsControl.setValue(values.showPolarityVectors);
+      multicellReleaseParticlesControl.setValue(values.showMulticellReleaseParticles);
       animationSpeedControl.setValue(values.animationSpeed);
     }
   };

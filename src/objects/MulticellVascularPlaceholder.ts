@@ -1,59 +1,12 @@
 import * as THREE from 'three';
 
 export class MulticellVascularPlaceholder extends THREE.Group {
-  private readonly cellGeometry: THREE.SphereGeometry;
-  private readonly cellMaterial: THREE.MeshStandardMaterial;
-  private readonly vesselGeometry: THREE.TubeGeometry;
-  private readonly vesselMaterial: THREE.MeshStandardMaterial;
   private readonly labelTexture: THREE.CanvasTexture;
   private readonly labelMaterial: THREE.SpriteMaterial;
 
   public constructor() {
     super();
     this.name = 'Multicell vascular polarity demo placeholder';
-
-    this.cellGeometry = new THREE.SphereGeometry(1, 32, 20);
-    this.cellMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7dd3fc,
-      transparent: true,
-      opacity: 0.22,
-      roughness: 0.72,
-      metalness: 0.02,
-      side: THREE.DoubleSide
-    });
-
-    const cellPositions = [
-      new THREE.Vector3(-7.0, 0.3, 0.2),
-      new THREE.Vector3(-3.5, -1.1, 1.2),
-      new THREE.Vector3(0.0, 0.8, -0.4),
-      new THREE.Vector3(3.6, -0.8, 0.8),
-      new THREE.Vector3(7.0, 0.4, -0.2)
-    ];
-
-    for (const position of cellPositions) {
-      const cell = new THREE.Mesh(this.cellGeometry, this.cellMaterial);
-      cell.position.copy(position);
-      cell.scale.set(2.25, 1.45, 1.75);
-      this.add(cell);
-    }
-
-    const vesselCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-9, -3.2, -1.2),
-      new THREE.Vector3(-4, -3.8, 0.4),
-      new THREE.Vector3(0, -3.1, 1.2),
-      new THREE.Vector3(4, -3.5, 0.2),
-      new THREE.Vector3(9, -2.9, -1.0)
-    ]);
-    this.vesselGeometry = new THREE.TubeGeometry(vesselCurve, 64, 0.28, 16, false);
-    this.vesselMaterial = new THREE.MeshStandardMaterial({
-      color: 0xfca5a5,
-      transparent: true,
-      opacity: 0.5,
-      roughness: 0.6
-    });
-
-    const vessel = new THREE.Mesh(this.vesselGeometry, this.vesselMaterial);
-    this.add(vessel);
 
     this.labelTexture = createLabelTexture('Multicell vascular polarity demo');
     this.labelMaterial = new THREE.SpriteMaterial({
@@ -69,10 +22,6 @@ export class MulticellVascularPlaceholder extends THREE.Group {
   }
 
   public dispose(): void {
-    this.cellGeometry.dispose();
-    this.cellMaterial.dispose();
-    this.vesselGeometry.dispose();
-    this.vesselMaterial.dispose();
     this.labelTexture.dispose();
     this.labelMaterial.dispose();
   }

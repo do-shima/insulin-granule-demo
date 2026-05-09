@@ -10,6 +10,9 @@ export interface SceneState {
   showCalciumField: boolean;
   showExocytosisParticles: boolean;
   showLabels: boolean;
+  showVascularContactPatches: boolean;
+  showPolarityVectors: boolean;
+  showMulticellReleaseParticles: boolean;
   animationSpeed: number;
 }
 
@@ -31,6 +34,9 @@ export const defaultSceneState: SceneState = {
   showCalciumField: true,
   showExocytosisParticles: true,
   showLabels: true,
+  showVascularContactPatches: true,
+  showPolarityVectors: true,
+  showMulticellReleaseParticles: true,
   animationSpeed: 1
 };
 
