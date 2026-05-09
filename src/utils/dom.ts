@@ -17,15 +17,32 @@ export function createSceneNote(): HTMLDivElement {
   return label;
 }
 
-export function createSceneInfo(granuleCount: number): HTMLDivElement {
+export interface SceneInfoPanel {
+  element: HTMLDivElement;
+  updateStateCounts: (counts: Record<string, number>) => void;
+}
+
+export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   const info = document.createElement('div');
   info.className = 'scene-info';
-  info.innerHTML = `
+
+  function updateStateCounts(counts: Record<string, number>): void {
+    info.innerHTML = `
   <strong>Insulin secretory granules</strong><br />
   Pancreatic beta-cell schematic<br />
-  Granules: ${granuleCount}
+  Granules: ${granuleCount}<br />
+  Mature: ${counts.mature ?? 0}<br />
+  Docked: ${counts.docked ?? 0}<br />
+  Primed: ${counts.primed ?? 0}<br />
+  Released: ${counts.released ?? 0}
 `;
+  }
+
+  updateStateCounts({});
   document.body.appendChild(info);
 
-  return info;
+  return {
+    element: info,
+    updateStateCounts
+  };
 }

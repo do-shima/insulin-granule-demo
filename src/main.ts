@@ -1,6 +1,5 @@
 import './style.css';
 import * as THREE from 'three';
-import { granuleCount } from './biology/betaCellModel';
 import { GranuleSystem } from './objects/GranuleSystem';
 import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
@@ -20,16 +19,24 @@ const granules = new GranuleSystem();
 scene.add(granules);
 
 createSceneNote();
-createSceneInfo(granuleCount);
+const sceneInfo = createSceneInfo(granules.getCount());
+sceneInfo.updateStateCounts(granules.getStateCounts());
 
 const clock = new THREE.Clock();
+let statusElapsed = 0;
 
 function animate(): void {
   requestAnimationFrame(animate);
 
   const deltaTime = Math.min(clock.getDelta(), 0.05);
+  statusElapsed += deltaTime;
 
   granules.update(deltaTime);
+  if (statusElapsed >= 0.5) {
+    sceneInfo.updateStateCounts(granules.getStateCounts());
+    statusElapsed = 0;
+  }
+
   controls.update();
   renderer.render(scene, camera);
 }
