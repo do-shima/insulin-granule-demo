@@ -1,5 +1,15 @@
 import type { GranuleStateCounts } from '../biology/granuleStates';
 
+const stateDisplayRows = [
+  { key: 'immature', label: 'Immature' },
+  { key: 'mature', label: 'Mature' },
+  { key: 'transporting', label: 'Transporting' },
+  { key: 'docked', label: 'Docked' },
+  { key: 'primed', label: 'Primed' },
+  { key: 'fusing', label: 'Fusing' },
+  { key: 'released', label: 'Released' }
+] as const;
+
 export function getAppMount(): HTMLDivElement {
   const mount = document.querySelector<HTMLDivElement>('#app');
 
@@ -62,18 +72,17 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
       counts.fusing +
       counts.released;
 
+    const stateRows = stateDisplayRows
+      .map(({ key, label }) => createStateCountRow(label, counts[key], granuleCount))
+      .join('');
+
     info.innerHTML = `
-  <strong>Insulin secretory granules</strong><br />
-  Pancreatic beta-cell schematic<br />
-  Granules: ${granuleCount}<br />
-  Counted states: ${accounted}<br />
-  Immature: ${counts.immature}<br />
-  Mature: ${counts.mature}<br />
-  Transporting: ${counts.transporting}<br />
-  Docked: ${counts.docked}<br />
-  Primed: ${counts.primed}<br />
-  Fusing: ${counts.fusing}<br />
-  Released: ${counts.released}
+  <div class="scene-info-title">Insulin secretory granules</div>
+  <div>Pancreatic beta-cell schematic</div>
+  <div>Granules: ${granuleCount}</div>
+  <div>Counted states: ${accounted}</div>
+  <div class="state-counts-title">Schematic granule states</div>
+  <div class="state-counts">${stateRows}</div>
 `;
   }
 
@@ -92,6 +101,20 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
     element: info,
     updateStateCounts
   };
+}
+
+function createStateCountRow(label: string, count: number, total: number): string {
+  const percentage = total > 0 ? Math.min(Math.max((count / total) * 100, 0), 100) : 0;
+
+  return `
+    <div class="state-count-row">
+      <div class="state-count-label">${label}</div>
+      <div class="state-count-track">
+        <div class="state-count-bar" style="width: ${percentage.toFixed(2)}%"></div>
+      </div>
+      <div class="state-count-value">${count}</div>
+    </div>
+  `;
 }
 
 export function createSceneControls(
