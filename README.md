@@ -4,9 +4,7 @@ A schematic Three.js visualization of insulin secretory granules maturing, trans
 
 ## Screenshot
 
-Screenshot placeholder:
-
-![Insulin granule schematic screenshot](docs/screenshot-placeholder.png)
+![Insulin granule schematic screenshot](docs/screenshot-overview.png)
 
 ## Run Locally
 
