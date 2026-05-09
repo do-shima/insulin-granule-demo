@@ -43,7 +43,7 @@ export class PolarityVectorField extends THREE.Group {
     this.coneMesh.name = 'polarity direction arrowheads';
     this.populateArrowheads(cells);
 
-    this.labelTexture = createLabelTexture('polarity direction');
+    this.labelTexture = createLabelTexture('vascular-facing polarity');
     this.labelMaterial = new THREE.SpriteMaterial({
       map: this.labelTexture,
       transparent: true,

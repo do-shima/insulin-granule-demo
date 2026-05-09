@@ -8,9 +8,9 @@ const zAxis = new THREE.Vector3(0, 0, 1);
 export class SelectedCellHighlight extends THREE.Group {
   private readonly shellGeometry = new THREE.SphereGeometry(1, 32, 20);
   private readonly shellMaterial = new THREE.MeshBasicMaterial({
-    color: 0xbae6fd,
+    color: 0xfef08a,
     transparent: true,
-    opacity: 0.28,
+    opacity: 0.46,
     wireframe: true,
     depthWrite: false
   });
@@ -19,7 +19,7 @@ export class SelectedCellHighlight extends THREE.Group {
   private readonly patchMaterial = new THREE.MeshBasicMaterial({
     color: 0xfde047,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.96,
     side: THREE.DoubleSide,
     depthWrite: false
   });
@@ -28,7 +28,7 @@ export class SelectedCellHighlight extends THREE.Group {
   private readonly lineMaterial = new THREE.LineBasicMaterial({
     color: 0xe0f2fe,
     transparent: true,
-    opacity: 0.95,
+    opacity: 1,
     depthWrite: false
   });
   private readonly line: THREE.Line;
@@ -36,7 +36,7 @@ export class SelectedCellHighlight extends THREE.Group {
   private readonly coneMaterial = new THREE.MeshBasicMaterial({
     color: 0xe0f2fe,
     transparent: true,
-    opacity: 0.95,
+    opacity: 1,
     depthWrite: false
   });
   private readonly cone = new THREE.Mesh(this.coneGeometry, this.coneMaterial);
@@ -44,7 +44,7 @@ export class SelectedCellHighlight extends THREE.Group {
   private readonly haloMaterial = new THREE.MeshBasicMaterial({
     color: 0xfef08a,
     transparent: true,
-    opacity: 0.72,
+    opacity: 0.94,
     depthWrite: false
   });
   private readonly halo = new THREE.Mesh(this.haloGeometry, this.haloMaterial);
@@ -78,15 +78,15 @@ export class SelectedCellHighlight extends THREE.Group {
     this.rotationQuaternion.setFromEuler(cell.rotation);
     this.shell.position.copy(cell.center);
     this.shell.quaternion.copy(this.rotationQuaternion);
-    this.shell.scale.copy(cell.radii).multiplyScalar(1.08);
+    this.shell.scale.copy(cell.radii).multiplyScalar(1.18);
 
     this.patch.position.copy(surfacePoint).addScaledVector(cell.polarityDirection, 0.035);
     this.patch.quaternion.setFromUnitVectors(zAxis, cell.polarityDirection);
-    this.patch.scale.set(0.72, 0.48, 1);
+    this.patch.scale.set(0.92, 0.62, 1);
 
     this.halo.position.copy(surfacePoint).addScaledVector(cell.polarityDirection, 0.06);
     this.halo.quaternion.setFromUnitVectors(zAxis, cell.polarityDirection);
-    this.halo.scale.set(0.92, 0.92, 0.92);
+    this.halo.scale.set(1.16, 1.16, 1.16);
 
     this.linePositions[0] = cell.center.x;
     this.linePositions[1] = cell.center.y;
@@ -98,10 +98,10 @@ export class SelectedCellHighlight extends THREE.Group {
 
     this.cone.position.copy(arrowEnd);
     this.cone.quaternion.setFromUnitVectors(yAxis, cell.polarityDirection);
-    this.cone.scale.set(0.18, 0.44, 0.18);
+    this.cone.scale.set(0.24, 0.56, 0.24);
 
-    this.label.position.copy(cell.center).add(new THREE.Vector3(0, cell.radii.y + 1.1, 0));
-    this.label.scale.set(4.6, 0.86, 1);
+    this.label.position.copy(cell.center).add(new THREE.Vector3(0, cell.radii.y + 1.35, 0));
+    this.label.scale.set(5.2, 0.98, 1);
   }
 
   public setLabelsVisible(value: boolean): void {

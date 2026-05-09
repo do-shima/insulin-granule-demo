@@ -95,6 +95,10 @@ export class CapillaryNetwork extends THREE.Group {
     this.label.visible = value;
   }
 
+  public setBackdropContextVisible(value: boolean): void {
+    this.material.opacity = value ? 0.28 : 0.46;
+  }
+
   public dispose(): void {
     for (const geometry of this.geometries) {
       geometry.dispose();

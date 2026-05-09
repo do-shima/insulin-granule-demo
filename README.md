@@ -36,7 +36,14 @@ The demo has two visualization modes:
 - Schematic multicell release particles
 - Schematic ER and mitochondria
 - Schematic fusion event counter
+- Optional Blender-generated multicell backdrop
 - Demo-only scientific disclaimer
+
+## Blender Visual Assets
+
+`public/assets/multicell_backdrop.glb` is optional and visual-only. It provides subdued background context for the multicell vascular polarity mode.
+
+The GLB does not drive polarity calculations, vascular contact definitions, release events, secretion behavior, or quantitative biology. If optional GLB assets are missing, the app falls back to the procedural visuals.
 
 ## Scientific Caveat
 
@@ -56,11 +63,11 @@ Educational demo only. This visualization does not represent real insulin secret
 - Not anatomically exact
 - Not quantitatively calibrated
 - No real microscopy input yet
-- No Blender assets yet
+- Blender assets are optional visual backdrops only
 
 ## Future Work
 
-- Blender/GLB visual assets
+- Additional Blender/GLB visual assets
 - Optional performance tuning
 - Optional screenshot export
 - Optional educational labels refinement

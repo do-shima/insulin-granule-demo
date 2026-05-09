@@ -49,7 +49,8 @@ const singleCellGroup = new THREE.Group();
 singleCellGroup.name = 'Single-cell granule demo';
 scene.add(singleCellGroup);
 
-singleCellGroup.add(new AssetBackdrops('assets/single_cell_backdrop.glb', 'Single-cell optional GLB backdrop'));
+const singleCellBackdrop = new AssetBackdrops('assets/single_cell_backdrop.glb', 'Single-cell optional GLB backdrop');
+singleCellGroup.add(singleCellBackdrop);
 singleCellGroup.add(createBetaCellShell());
 singleCellGroup.add(createNucleus());
 singleCellGroup.add(createGolgiRegion());
@@ -85,7 +86,8 @@ granules.setExocytosisEventHandler((event) => {
 singleCellGroup.add(granules);
 
 const multicellPlaceholder = new MulticellVascularPlaceholder();
-multicellPlaceholder.add(new AssetBackdrops('assets/multicell_backdrop.glb', 'Multicell optional GLB backdrop'));
+const multicellBackdrop = new AssetBackdrops('assets/multicell_backdrop.glb', 'Multicell optional GLB backdrop');
+multicellPlaceholder.add(multicellBackdrop);
 const capillaryNetwork = new CapillaryNetwork();
 const isletCellCluster = new IsletCellCluster(capillaryNetwork);
 const vascularContactPatches = new VascularContactPatches(isletCellCluster.getCells());
@@ -122,9 +124,16 @@ function applySceneState(state: Readonly<SceneState>): void {
   singleCellGroup.visible = isSingleCellMode;
   multicellPlaceholder.visible = state.demoMode === 'multicellVascular';
   activeDemoMode = state.demoMode;
+  const showMulticellLabels = state.showLabels && !isSingleCellMode;
+  const showFullMulticellLabels = showMulticellLabels && state.multicellLabelDetail === 'full';
+
   granules.setStimulationLevel(state.calciumStimulation);
   calciumField.setStimulationLevel(state.calciumStimulation);
   multicellReleaseParticles.setStimulationLevel(state.calciumStimulation);
+  singleCellBackdrop.setBackdropVisible(state.showBlenderBackdrops);
+  singleCellBackdrop.setBackdropOpacity(state.backdropOpacity);
+  multicellBackdrop.setBackdropVisible(state.showBlenderBackdrops);
+  multicellBackdrop.setBackdropOpacity(state.backdropOpacity);
   endoplasmicReticulum.visible = state.showEr;
   mitochondria.visible = state.showMitochondria;
   microtubules.visible = state.showMicrotubules;
@@ -132,14 +141,16 @@ function applySceneState(state: Readonly<SceneState>): void {
   calciumField.visible = state.showCalciumField;
   exocytosis.setParticlesVisible(state.showExocytosisParticles);
   labels.setLabelsVisible(state.showLabels);
-  capillaryNetwork.setLabelsVisible(state.showLabels);
+  multicellPlaceholder.setLabelVisible(showFullMulticellLabels);
+  capillaryNetwork.setLabelsVisible(showMulticellLabels);
+  capillaryNetwork.setBackdropContextVisible(state.showBlenderBackdrops);
   vascularContactPatches.setPatchesVisible(state.showVascularContactPatches);
   vascularContactPatches.setReleaseParticlesVisible(state.showMulticellReleaseParticles);
-  vascularContactPatches.setLabelsVisible(state.showLabels);
+  vascularContactPatches.setLabelsVisible(showFullMulticellLabels);
   polarityVectorField.setVectorsVisible(state.showPolarityVectors);
-  polarityVectorField.setLabelsVisible(state.showLabels);
+  polarityVectorField.setLabelsVisible(showMulticellLabels && state.showPolarityVectors);
   selectedCellHighlight.setSelectedCell(isletCellCluster.getCellById(state.selectedCellId));
-  selectedCellHighlight.setLabelsVisible(state.showLabels);
+  selectedCellHighlight.setLabelsVisible(showMulticellLabels);
   selectedCellHighlight.setPatchVisible(state.showVascularContactPatches);
   selectedCellHighlight.setVectorVisible(state.showPolarityVectors);
   multicellReleaseParticles.setParticlesVisible(state.showMulticellReleaseParticles);
@@ -163,7 +174,8 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onDemoModeChange: (value) => {
     sceneState.setState({
       demoMode: value,
-      openedSelectedCellDetail: false
+      openedSelectedCellDetail: false,
+      multicellLabelDetail: value === 'multicellVascular' ? 'compact' : sceneState.getState().multicellLabelDetail
     });
     if (value === 'multicellVascular') {
       applyCameraPreset('multicellOverview');
@@ -180,6 +192,9 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onShowVascularContactPatchesChange: (value) => sceneState.setState({ showVascularContactPatches: value }),
   onShowPolarityVectorsChange: (value) => sceneState.setState({ showPolarityVectors: value }),
   onShowMulticellReleaseParticlesChange: (value) => sceneState.setState({ showMulticellReleaseParticles: value }),
+  onShowBlenderBackdropsChange: (value) => sceneState.setState({ showBlenderBackdrops: value }),
+  onBackdropOpacityChange: (value) => sceneState.setState({ backdropOpacity: value }),
+  onMulticellLabelDetailChange: (value) => sceneState.setState({ multicellLabelDetail: value }),
   onAnimationSpeedChange: (value) => sceneState.setState({ animationSpeed: value }),
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
@@ -248,6 +263,7 @@ createWelcomeOverlay({
       openedSelectedCellDetail: false,
       showLabels: true,
       calciumStimulation: 0.15,
+      multicellLabelDetail: 'compact',
       showVascularContactPatches: true,
       showPolarityVectors: true,
       showMulticellReleaseParticles: false

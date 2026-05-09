@@ -1,4 +1,5 @@
 export type DemoMode = 'singleCell' | 'multicellVascular';
+export type MulticellLabelDetail = 'compact' | 'full';
 
 export interface SceneState {
   demoMode: DemoMode;
@@ -15,6 +16,9 @@ export interface SceneState {
   showVascularContactPatches: boolean;
   showPolarityVectors: boolean;
   showMulticellReleaseParticles: boolean;
+  showBlenderBackdrops: boolean;
+  backdropOpacity: number;
+  multicellLabelDetail: MulticellLabelDetail;
   animationSpeed: number;
 }
 
@@ -41,6 +45,9 @@ export const defaultSceneState: SceneState = {
   showVascularContactPatches: true,
   showPolarityVectors: true,
   showMulticellReleaseParticles: true,
+  showBlenderBackdrops: false,
+  backdropOpacity: 0.16,
+  multicellLabelDetail: 'compact',
   animationSpeed: 1
 };
 

@@ -1,5 +1,5 @@
 import type { GranuleStateCounts } from '../biology/granuleStates';
-import type { DemoMode, SceneState } from '../state/sceneState';
+import type { DemoMode, MulticellLabelDetail, SceneState } from '../state/sceneState';
 import type { FusionEventCounts } from './fusionEventCounter';
 
 const stateDisplayRows = [
@@ -75,6 +75,9 @@ export interface SceneControlCallbacks {
   onShowVascularContactPatchesChange: (value: boolean) => void;
   onShowPolarityVectorsChange: (value: boolean) => void;
   onShowMulticellReleaseParticlesChange: (value: boolean) => void;
+  onShowBlenderBackdropsChange: (value: boolean) => void;
+  onBackdropOpacityChange: (value: number) => void;
+  onMulticellLabelDetailChange: (value: MulticellLabelDetail) => void;
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
   onOpenSelectedCellDetail: () => void;
@@ -246,6 +249,15 @@ export function createSceneControls(
     checked: initialValues.showLabels,
     onChange: callbacks.onShowLabelsChange
   });
+  const multicellLabelsControl = createCheckboxControl({
+    label: 'Show labels',
+    checked: initialValues.showLabels,
+    onChange: callbacks.onShowLabelsChange
+  });
+  const multicellLabelDetailControl = createLabelDetailControl({
+    value: initialValues.multicellLabelDetail,
+    onChange: callbacks.onMulticellLabelDetailChange
+  });
   const vascularContactPatchesControl = createCheckboxControl({
     label: 'Show vascular contact patches',
     checked: initialValues.showVascularContactPatches,
@@ -261,6 +273,19 @@ export function createSceneControls(
     checked: initialValues.showMulticellReleaseParticles,
     onChange: callbacks.onShowMulticellReleaseParticlesChange
   });
+  const blenderBackdropsControl = createCheckboxControl({
+    label: 'Show Blender backdrops',
+    checked: initialValues.showBlenderBackdrops,
+    onChange: callbacks.onShowBlenderBackdropsChange
+  });
+  const backdropOpacityControl = createRangeControl({
+    label: 'Backdrop opacity',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    value: initialValues.backdropOpacity,
+    onChange: callbacks.onBackdropOpacityChange
+  });
   const animationSpeedControl = createRangeControl({
     label: 'Animation speed',
     min: 0.1,
@@ -270,33 +295,47 @@ export function createSceneControls(
     onChange: callbacks.onAnimationSpeedChange
   });
 
-  body.append(
-    modeControl.element,
-    calciumControl.element,
+  const singleCellControls = document.createElement('div');
+  singleCellControls.className = 'scene-control-section';
+  singleCellControls.append(
     erControl.element,
     mitochondriaControl.element,
     microtubulesControl.element,
     microtubuleOpacityControl.element,
     calciumFieldControl.element,
     exocytosisParticlesControl.element,
-    labelsControl.element,
+    labelsControl.element
+  );
+
+  const singleCellPresetGroup = document.createElement('div');
+  singleCellPresetGroup.className = 'scene-control-button-group';
+  singleCellPresetGroup.append(
+    createActionButton('Overview', () => callbacks.onCameraPreset('overview')),
+    createActionButton('Secretion pole', () => callbacks.onCameraPreset('secretionPole')),
+    createActionButton('Transport view', () => callbacks.onCameraPreset('transport'))
+  );
+  singleCellControls.appendChild(singleCellPresetGroup);
+
+  const multicellControls = document.createElement('div');
+  multicellControls.className = 'scene-control-section';
+  multicellControls.append(
+    multicellLabelsControl.element,
+    multicellLabelDetailControl.element,
     vascularContactPatchesControl.element,
     polarityVectorsControl.element,
     multicellReleaseParticlesControl.element,
-    animationSpeedControl.element
+    blenderBackdropsControl.element,
+    backdropOpacityControl.element
   );
 
-  const presetGroup = document.createElement('div');
-  presetGroup.className = 'scene-control-button-group';
-  presetGroup.append(
-    createActionButton('Overview', () => callbacks.onCameraPreset('overview')),
-    createActionButton('Secretion pole', () => callbacks.onCameraPreset('secretionPole')),
-    createActionButton('Transport view', () => callbacks.onCameraPreset('transport')),
+  const multicellPresetGroup = document.createElement('div');
+  multicellPresetGroup.className = 'scene-control-button-group';
+  multicellPresetGroup.append(
     createActionButton('Multicell overview', () => callbacks.onCameraPreset('multicellOverview')),
     createActionButton('Capillary polarity', () => callbacks.onCameraPreset('capillaryPolarity')),
     createActionButton('Vascular release', () => callbacks.onCameraPreset('vascularRelease'))
   );
-  body.appendChild(presetGroup);
+  multicellControls.appendChild(multicellPresetGroup);
 
   const selectedCellGroup = document.createElement('div');
   selectedCellGroup.className = 'scene-control-button-group';
@@ -305,7 +344,15 @@ export function createSceneControls(
     createActionButton('Previous selected cell', callbacks.onPreviousSelectedCell),
     createActionButton('Next selected cell', callbacks.onNextSelectedCell)
   );
-  body.appendChild(selectedCellGroup);
+  multicellControls.appendChild(selectedCellGroup);
+
+  body.append(
+    modeControl.element,
+    calciumControl.element,
+    singleCellControls,
+    multicellControls,
+    animationSpeedControl.element
+  );
 
   const resetButton = document.createElement('button');
   resetButton.type = 'button';
@@ -328,10 +375,16 @@ export function createSceneControls(
       calciumFieldControl.setValue(values.showCalciumField);
       exocytosisParticlesControl.setValue(values.showExocytosisParticles);
       labelsControl.setValue(values.showLabels);
+      multicellLabelsControl.setValue(values.showLabels);
       vascularContactPatchesControl.setValue(values.showVascularContactPatches);
       polarityVectorsControl.setValue(values.showPolarityVectors);
       multicellReleaseParticlesControl.setValue(values.showMulticellReleaseParticles);
+      blenderBackdropsControl.setValue(values.showBlenderBackdrops);
+      backdropOpacityControl.setValue(values.backdropOpacity);
+      multicellLabelDetailControl.setValue(values.multicellLabelDetail);
       animationSpeedControl.setValue(values.animationSpeed);
+      singleCellControls.hidden = values.demoMode !== 'singleCell';
+      multicellControls.hidden = values.demoMode !== 'multicellVascular';
     }
   };
 }
@@ -425,6 +478,63 @@ function createModeButton(
   label: string,
   value: DemoMode,
   onChange: (value: DemoMode) => void
+): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'scene-mode-button';
+  button.textContent = label;
+  button.addEventListener('click', () => {
+    onChange(value);
+  });
+
+  return button;
+}
+
+interface LabelDetailControlOptions {
+  value: MulticellLabelDetail;
+  onChange: (value: MulticellLabelDetail) => void;
+}
+
+interface LabelDetailControl {
+  element: HTMLDivElement;
+  setValue: (value: MulticellLabelDetail) => void;
+}
+
+function createLabelDetailControl(options: LabelDetailControlOptions): LabelDetailControl {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'scene-mode-control scene-label-detail-control';
+
+  const label = document.createElement('div');
+  label.className = 'scene-mode-label';
+  label.textContent = 'Label detail';
+
+  const buttonGroup = document.createElement('div');
+  buttonGroup.className = 'scene-mode-buttons';
+
+  const compactButton = createLabelDetailButton('Compact', 'compact', options.onChange);
+  const fullButton = createLabelDetailButton('Full', 'full', options.onChange);
+  buttonGroup.append(compactButton, fullButton);
+  wrapper.append(label, buttonGroup);
+
+  function setValue(value: MulticellLabelDetail): void {
+    compactButton.classList.toggle('is-active', value === 'compact');
+    fullButton.classList.toggle('is-active', value === 'full');
+    compactButton.setAttribute('aria-pressed', String(value === 'compact'));
+    fullButton.setAttribute('aria-pressed', String(value === 'full'));
+  }
+
+  setValue(options.value);
+
+  return {
+    element: wrapper,
+    setValue
+  };
+}
+
+function createLabelDetailButton(
+  label: string,
+  value: MulticellLabelDetail,
+  onChange: (value: MulticellLabelDetail) => void
 ): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';

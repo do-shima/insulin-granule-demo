@@ -3,6 +3,7 @@ import * as THREE from 'three';
 export class MulticellVascularPlaceholder extends THREE.Group {
   private readonly labelTexture: THREE.CanvasTexture;
   private readonly labelMaterial: THREE.SpriteMaterial;
+  private readonly label: THREE.Sprite;
 
   public constructor() {
     super();
@@ -15,10 +16,14 @@ export class MulticellVascularPlaceholder extends THREE.Group {
       depthWrite: false
     });
 
-    const label = new THREE.Sprite(this.labelMaterial);
-    label.position.set(0, 4.2, 0);
-    label.scale.set(10, 1.5, 1);
-    this.add(label);
+    this.label = new THREE.Sprite(this.labelMaterial);
+    this.label.position.set(0, 4.2, 0);
+    this.label.scale.set(10, 1.5, 1);
+    this.add(this.label);
+  }
+
+  public setLabelVisible(value: boolean): void {
+    this.label.visible = value;
   }
 
   public dispose(): void {

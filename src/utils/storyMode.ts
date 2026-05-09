@@ -111,6 +111,7 @@ export const storySteps: StoryStep[] = [
       openedSelectedCellDetail: false,
       calciumStimulation: 0.15,
       showLabels: true,
+      multicellLabelDetail: 'compact',
       showVascularContactPatches: false,
       showPolarityVectors: false,
       showMulticellReleaseParticles: false
@@ -127,6 +128,7 @@ export const storySteps: StoryStep[] = [
       openedSelectedCellDetail: false,
       calciumStimulation: 0.2,
       showLabels: true,
+      multicellLabelDetail: 'full',
       showVascularContactPatches: true,
       showPolarityVectors: true,
       showMulticellReleaseParticles: false
@@ -143,6 +145,7 @@ export const storySteps: StoryStep[] = [
       openedSelectedCellDetail: false,
       calciumStimulation: 0.85,
       showLabels: true,
+      multicellLabelDetail: 'compact',
       showVascularContactPatches: true,
       showPolarityVectors: true,
       showMulticellReleaseParticles: true
