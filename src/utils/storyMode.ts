@@ -19,6 +19,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'overview',
     settings: {
       demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.15,
       showLabels: true,
       showMicrotubules: true,
@@ -34,6 +35,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'transport',
     settings: {
       demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.15,
       showLabels: true,
       showMicrotubules: true,
@@ -49,6 +51,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'transport',
     settings: {
       demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.2,
       showLabels: true,
       showMicrotubules: true,
@@ -64,6 +67,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'secretionPole',
     settings: {
       demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.25,
       showLabels: true,
       showMicrotubules: true,
@@ -79,6 +83,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'secretionPole',
     settings: {
       demoMode: 'singleCell',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.85,
       showLabels: true,
       showMicrotubules: true,
@@ -94,6 +99,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'multicellOverview',
     settings: {
       demoMode: 'multicellVascular',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.15,
       showLabels: true,
       showVascularContactPatches: false,
@@ -108,6 +114,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'capillaryPolarity',
     settings: {
       demoMode: 'multicellVascular',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.2,
       showLabels: true,
       showVascularContactPatches: true,
@@ -122,6 +129,7 @@ export const storySteps: StoryStep[] = [
     cameraPreset: 'vascularRelease',
     settings: {
       demoMode: 'multicellVascular',
+      openedSelectedCellDetail: false,
       calciumStimulation: 0.85,
       showLabels: true,
       showVascularContactPatches: true,

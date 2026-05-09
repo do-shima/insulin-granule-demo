@@ -147,6 +147,7 @@ function updateSceneInfo(): void {
 
   sceneInfo.updateCounts({
     demoMode: currentState.demoMode,
+    openedSelectedCellDetail: currentState.openedSelectedCellDetail,
     calciumStimulation: currentState.calciumStimulation,
     stateCounts: granules.getStateCounts(),
     fusionEvents: fusionEventCounter.getCounts(),
@@ -156,7 +157,10 @@ function updateSceneInfo(): void {
 
 const sceneControls = createSceneControls(sceneState.getState(), {
   onDemoModeChange: (value) => {
-    sceneState.setState({ demoMode: value });
+    sceneState.setState({
+      demoMode: value,
+      openedSelectedCellDetail: false
+    });
     if (value === 'multicellVascular') {
       applyCameraPreset('multicellOverview');
     }
@@ -175,6 +179,15 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onAnimationSpeedChange: (value) => sceneState.setState({ animationSpeed: value }),
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
+  },
+  onOpenSelectedCellDetail: () => {
+    sceneState.setState({
+      demoMode: 'singleCell',
+      openedSelectedCellDetail: true,
+      showLabels: true,
+      calciumStimulation: 0.35
+    });
+    applyCameraPreset('secretionPole');
   },
   onPreviousSelectedCell: () => {
     selectRelativeCell(-1);

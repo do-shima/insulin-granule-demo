@@ -45,6 +45,7 @@ export interface SceneInfoPanel {
 
 export interface SceneInfoSnapshot {
   readonly demoMode: DemoMode;
+  readonly openedSelectedCellDetail: boolean;
   readonly calciumStimulation: number;
   readonly stateCounts: GranuleStateCounts;
   readonly fusionEvents: FusionEventCounts;
@@ -76,6 +77,7 @@ export interface SceneControlCallbacks {
   onShowMulticellReleaseParticlesChange: (value: boolean) => void;
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
+  onOpenSelectedCellDetail: () => void;
   onPreviousSelectedCell: () => void;
   onNextSelectedCell: () => void;
   onResetGranules: () => void;
@@ -100,6 +102,7 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
 
   updateCounts({
     demoMode: 'singleCell',
+    openedSelectedCellDetail: false,
     calciumStimulation: 0.15,
     stateCounts: createZeroStateCounts(),
     fusionEvents: { total: 0, recent: 0 },
@@ -130,6 +133,7 @@ function createSingleCellInfo(snapshot: SceneInfoSnapshot, granuleCount: number)
 
   return `
   <div class="scene-info-mode">Active mode: single-cell granule demo</div>
+  ${snapshot.openedSelectedCellDetail ? '<div class="scene-info-caveat">The selected beta cell is shown in single-cell detail as a schematic intracellular granule demo. This is not a reconstruction of that exact selected cell.</div>' : ''}
   <div>Pancreatic beta-cell schematic</div>
   <div>Calcium stimulation: ${snapshot.calciumStimulation.toFixed(2)}</div>
   <div>Granules: ${granuleCount}</div>
@@ -297,6 +301,7 @@ export function createSceneControls(
   const selectedCellGroup = document.createElement('div');
   selectedCellGroup.className = 'scene-control-button-group';
   selectedCellGroup.append(
+    createActionButton('Open selected cell detail', callbacks.onOpenSelectedCellDetail),
     createActionButton('Previous selected cell', callbacks.onPreviousSelectedCell),
     createActionButton('Next selected cell', callbacks.onNextSelectedCell)
   );
