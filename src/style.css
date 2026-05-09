@@ -49,3 +49,35 @@ canvas {
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
+
+.stimulation-control {
+  position: fixed;
+  right: 18px;
+  top: 16px;
+  width: 220px;
+  padding: 10px 13px;
+  border: 1px solid rgba(180, 210, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(5, 8, 18, 0.72);
+  color: rgba(230, 240, 255, 0.92);
+  font-size: 13px;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+}
+
+.stimulation-control label {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.stimulation-value {
+  color: rgba(165, 243, 252, 0.95);
+  font-variant-numeric: tabular-nums;
+}
+
+.stimulation-control input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  accent-color: #67e8f9;
+}

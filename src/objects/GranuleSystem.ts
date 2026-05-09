@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import {
+  getEllipsoidNormal,
   isInsideEllipsoid,
   isOutsideNucleus,
+  projectToEllipsoidSurface,
   randomPointInsideEllipsoid,
   randomPointNearMembrane
 } from '../biology/betaCellGeometry';
@@ -17,6 +19,8 @@ import {
   createEmptyGranuleStateCounts,
   getGranuleStateName
 } from '../biology/granuleStates';
+import type { ExocytosisEvent } from './ExocytosisSystem';
+import { MicrotubuleNetwork } from './MicrotubuleNetwork';
 
 const GRANULE_STRIDE = 3;
 const MAX_INITIAL_PLACEMENT_ATTEMPTS = 10_000;
@@ -26,7 +30,15 @@ const PRIMED_DISTANCE_FROM_MEMBRANE = 0.42;
 const IMMATURE_FRACTION = 0.08;
 const DOCKED_FRACTION = 0.08;
 const PRIMED_FRACTION = 0.04;
+const TRANSPORTING_FRACTION = 0.12;
+const TRANSPORT_RECRUIT_INTERVAL = 1.4;
+const TRANSPORT_RECRUIT_COUNT = 3;
 const RELEASE_RECYCLE_TIME = 3.0;
+const FUSING_DURATION = 0.8;
+const BASAL_PRIMING_RATE = 0.004;
+const STIMULATED_PRIMING_RATE = 0.22;
+const BASAL_FUSION_RATE = 0.002;
+const STIMULATED_FUSION_RATE = 0.18;
 
 export class GranuleSystem extends THREE.Group {
   private readonly shellMesh: THREE.InstancedMesh;
@@ -37,21 +49,34 @@ export class GranuleSystem extends THREE.Group {
   private readonly scales: Float32Array;
   private readonly states: Uint8Array;
   private readonly stateTimes: Float32Array;
+  private readonly transportPathIndices: Uint8Array;
+  private readonly transportProgress: Float32Array;
+  private readonly transportSpeeds: Float32Array;
+  private readonly transportOffsets: Float32Array;
   private readonly dummy = new THREE.Object3D();
   private readonly testPoint = new THREE.Vector3();
+  private readonly pathPoint = new THREE.Vector3();
   private readonly color = new THREE.Color();
   private readonly granuleTotal: number;
+  private readonly microtubules?: MicrotubuleNetwork;
+  private exocytosisEventHandler?: (event: ExocytosisEvent) => void;
   private stimulationLevel = 0;
+  private transportRecruitElapsed = 0;
 
-  public constructor(total = granuleCount) {
+  public constructor(total = granuleCount, microtubules?: MicrotubuleNetwork) {
     super();
 
     this.granuleTotal = total;
+    this.microtubules = microtubules;
     this.positions = new Float32Array(total * GRANULE_STRIDE);
     this.velocities = new Float32Array(total * GRANULE_STRIDE);
     this.scales = new Float32Array(total);
     this.states = new Uint8Array(total);
     this.stateTimes = new Float32Array(total);
+    this.transportPathIndices = new Uint8Array(total);
+    this.transportProgress = new Float32Array(total);
+    this.transportSpeeds = new Float32Array(total);
+    this.transportOffsets = new Float32Array(total * GRANULE_STRIDE);
 
     const shellGeometry = new THREE.SphereGeometry(0.26, 16, 8);
     const haloGeometry = new THREE.SphereGeometry(0.20, 16, 8);
@@ -100,9 +125,15 @@ export class GranuleSystem extends THREE.Group {
     const driftJitter = deltaTime * (0.012 + this.stimulationLevel * 0.008);
     const maxVelocity = 0.028;
 
+    this.transportRecruitElapsed += deltaTime;
+    if (this.transportRecruitElapsed >= TRANSPORT_RECRUIT_INTERVAL) {
+      this.recruitTransportingGranules(TRANSPORT_RECRUIT_COUNT);
+      this.transportRecruitElapsed = 0;
+    }
+
     for (let index = 0; index < this.granuleTotal; index += 1) {
       const offset = index * GRANULE_STRIDE;
-      const state = this.states[index] as GranuleState;
+      let state = this.states[index] as GranuleState;
 
       this.stateTimes[index] += deltaTime;
 
@@ -116,7 +147,7 @@ export class GranuleSystem extends THREE.Group {
         continue;
       }
 
-      if (state === GranuleState.Fusing && this.stateTimes[index] > 0.8) {
+      if (state === GranuleState.Fusing && this.stateTimes[index] > FUSING_DURATION) {
         this.setState(index, GranuleState.Released);
         this.updateInstance(index, this.positions[offset], this.positions[offset + 1], this.positions[offset + 2]);
         continue;
@@ -124,6 +155,22 @@ export class GranuleSystem extends THREE.Group {
 
       if (state === GranuleState.Immature && this.stateTimes[index] > 24.0) {
         this.setState(index, GranuleState.Mature);
+        state = GranuleState.Mature;
+      }
+
+      if (state === GranuleState.Docked && this.shouldPrimeDockedGranule(deltaTime)) {
+        this.setState(index, GranuleState.Primed);
+        state = GranuleState.Primed;
+      }
+
+      if (state === GranuleState.Primed && this.shouldFusePrimedGranule(deltaTime)) {
+        this.beginFusion(index);
+        state = GranuleState.Fusing;
+      }
+
+      if (state === GranuleState.Transporting && this.microtubules) {
+        this.updateTransportingGranule(index, deltaTime);
+        continue;
       }
 
       let velocityX = this.velocities[offset] + (Math.random() - 0.5) * driftJitter;
@@ -182,6 +229,10 @@ export class GranuleSystem extends THREE.Group {
     this.stimulationLevel = THREE.MathUtils.clamp(value, 0, 1);
   }
 
+  public setExocytosisEventHandler(handler: ((event: ExocytosisEvent) => void) | undefined): void {
+    this.exocytosisEventHandler = handler;
+  }
+
   public triggerDockingPulse(count: number): void {
     let remaining = Math.max(0, Math.floor(count));
 
@@ -208,15 +259,22 @@ export class GranuleSystem extends THREE.Group {
 
   private initializeGranules(): void {
     const immatureCount = Math.floor(this.granuleTotal * IMMATURE_FRACTION);
+    const transportingCount = this.microtubules
+      ? Math.floor(this.granuleTotal * TRANSPORTING_FRACTION)
+      : 0;
     const dockedCount = Math.floor(this.granuleTotal * DOCKED_FRACTION);
     const primedCount = Math.floor(this.granuleTotal * PRIMED_FRACTION);
     const dockedStart = this.granuleTotal - dockedCount - primedCount;
     const primedStart = this.granuleTotal - primedCount;
+    const transportingEnd = immatureCount + transportingCount;
 
     for (let index = 0; index < this.granuleTotal; index += 1) {
       if (index < immatureCount) {
         this.randomizeNearGolgi(index);
         this.setState(index, GranuleState.Immature);
+      } else if (index < transportingEnd) {
+        this.randomizePosition(index);
+        this.assignTransport(index);
       } else if (index >= primedStart) {
         this.placeNearMembrane(index, PRIMED_DISTANCE_FROM_MEMBRANE);
         this.setState(index, GranuleState.Primed);
@@ -264,6 +322,21 @@ export class GranuleSystem extends THREE.Group {
     this.positions[offset] = cellRadii.x * 0.5;
     this.positions[offset + 1] = 0;
     this.positions[offset + 2] = 0;
+  }
+
+  private randomizeNearPathStart(index: number): void {
+    const offset = index * GRANULE_STRIDE;
+
+    this.writeTransportPosition(index, this.transportProgress[index]);
+    if (this.isInsideAllowedVolume(
+      this.positions[offset],
+      this.positions[offset + 1],
+      this.positions[offset + 2]
+    )) {
+      return;
+    }
+
+    this.randomizePosition(index);
   }
 
   private randomizeNearGolgi(index: number): void {
@@ -333,6 +406,118 @@ export class GranuleSystem extends THREE.Group {
     this.markColorsDirty();
   }
 
+  private beginFusion(index: number): void {
+    const offset = index * GRANULE_STRIDE;
+
+    this.testPoint.set(
+      this.positions[offset],
+      this.positions[offset + 1],
+      this.positions[offset + 2]
+    );
+
+    const surfacePoint = projectToEllipsoidSurface(this.testPoint, cellRadii);
+    const normal = getEllipsoidNormal(surfacePoint, cellRadii);
+
+    this.positions[offset] = surfacePoint.x - normal.x * 0.22;
+    this.positions[offset + 1] = surfacePoint.y - normal.y * 0.22;
+    this.positions[offset + 2] = surfacePoint.z - normal.z * 0.22;
+    this.velocities[offset] = 0;
+    this.velocities[offset + 1] = 0;
+    this.velocities[offset + 2] = 0;
+    this.setState(index, GranuleState.Fusing);
+
+    this.exocytosisEventHandler?.({
+      position: surfacePoint,
+      normal,
+      granuleIndex: index
+    });
+  }
+
+  private assignTransport(index: number): void {
+    if (!this.microtubules || this.microtubules.getPathCount() === 0) {
+      this.setState(index, GranuleState.Mature);
+      return;
+    }
+
+    const offset = index * GRANULE_STRIDE;
+    const pathCount = this.microtubules.getPathCount();
+
+    this.transportPathIndices[index] = Math.floor(Math.random() * pathCount);
+    this.transportProgress[index] = 0.03 + Math.random() * 0.16;
+    this.transportSpeeds[index] = 0.055 + Math.random() * 0.045;
+    this.transportOffsets[offset] = (Math.random() - 0.5) * 0.55;
+    this.transportOffsets[offset + 1] = (Math.random() - 0.5) * 0.55;
+    this.transportOffsets[offset + 2] = (Math.random() - 0.5) * 0.55;
+    this.setState(index, GranuleState.Transporting);
+    this.randomizeNearPathStart(index);
+  }
+
+  private recruitTransportingGranules(count: number): void {
+    if (!this.microtubules) {
+      return;
+    }
+
+    let remaining = count + Math.floor(this.stimulationLevel * count);
+    const startIndex = Math.floor(Math.random() * this.granuleTotal);
+
+    for (let step = 0; step < this.granuleTotal && remaining > 0; step += 1) {
+      const index = (startIndex + step) % this.granuleTotal;
+
+      if (this.states[index] === GranuleState.Mature && Math.random() < 0.35) {
+        this.assignTransport(index);
+        remaining -= 1;
+      }
+    }
+  }
+
+  private updateTransportingGranule(index: number, deltaTime: number): void {
+    const offset = index * GRANULE_STRIDE;
+    const progress =
+      this.transportProgress[index] +
+      deltaTime * this.transportSpeeds[index] * (1.0 + this.stimulationLevel * 0.7);
+
+    this.transportProgress[index] = progress;
+
+    if (progress >= 0.98) {
+      if (Math.random() < 0.78 + this.stimulationLevel * 0.12) {
+        this.writeTransportPosition(index, 1.0);
+        this.setState(index, GranuleState.Docked);
+      } else {
+        this.placeNearMembrane(index, DOCKED_DISTANCE_FROM_MEMBRANE);
+        this.setState(index, GranuleState.Mature);
+      }
+
+      this.updateInstance(
+        index,
+        this.positions[offset],
+        this.positions[offset + 1],
+        this.positions[offset + 2]
+      );
+      return;
+    }
+
+    this.writeTransportPosition(index, progress);
+    this.updateInstance(
+      index,
+      this.positions[offset],
+      this.positions[offset + 1],
+      this.positions[offset + 2]
+    );
+  }
+
+  private writeTransportPosition(index: number, progress: number): void {
+    if (!this.microtubules) {
+      return;
+    }
+
+    const offset = index * GRANULE_STRIDE;
+
+    this.microtubules.writePointOnPath(this.transportPathIndices[index], progress, this.pathPoint);
+    this.positions[offset] = this.pathPoint.x + this.transportOffsets[offset];
+    this.positions[offset + 1] = this.pathPoint.y + this.transportOffsets[offset + 1];
+    this.positions[offset + 2] = this.pathPoint.z + this.transportOffsets[offset + 2];
+  }
+
   private getVisualScale(index: number): number {
     const scale = this.scales[index];
 
@@ -341,10 +526,12 @@ export class GranuleSystem extends THREE.Group {
         return scale * 0.76;
       case GranuleState.Docked:
         return scale * 1.06;
+      case GranuleState.Transporting:
+        return scale * 1.02;
       case GranuleState.Primed:
         return scale * 1.12;
       case GranuleState.Fusing:
-        return scale * 1.18;
+        return scale * Math.max(0.18, 1 - this.stateTimes[index] / FUSING_DURATION);
       default:
         return scale;
     }
@@ -353,14 +540,34 @@ export class GranuleSystem extends THREE.Group {
   private getStateSpeedMultiplier(state: GranuleState): number {
     switch (state) {
       case GranuleState.Docked:
-        return 0.08;
-      case GranuleState.Primed:
         return 0.04;
-      case GranuleState.Fusing:
+      case GranuleState.Primed:
         return 0.02;
+      case GranuleState.Fusing:
+        return 0;
+      case GranuleState.Transporting:
+        return 0;
       default:
         return 1.0;
     }
+  }
+
+  private shouldPrimeDockedGranule(deltaTime: number): boolean {
+    const stimulation = this.stimulationLevel * this.stimulationLevel;
+    const rate = BASAL_PRIMING_RATE + STIMULATED_PRIMING_RATE * stimulation;
+
+    return Math.random() < this.rateToProbability(rate, deltaTime);
+  }
+
+  private shouldFusePrimedGranule(deltaTime: number): boolean {
+    const stimulation = this.stimulationLevel * this.stimulationLevel;
+    const rate = BASAL_FUSION_RATE + STIMULATED_FUSION_RATE * stimulation;
+
+    return Math.random() < this.rateToProbability(rate, deltaTime);
+  }
+
+  private rateToProbability(ratePerSecond: number, deltaTime: number): number {
+    return 1 - Math.exp(-ratePerSecond * deltaTime);
   }
 
   private applyStateColor(index: number): void {
@@ -370,6 +577,9 @@ export class GranuleSystem extends THREE.Group {
         return;
       case GranuleState.Docked:
         this.setLayerColors(index, 0xffe2ae, 0xffffdc, 0xffc23a);
+        return;
+      case GranuleState.Transporting:
+        this.setLayerColors(index, 0xffdfaa, 0xfff8d8, 0xffbb22);
         return;
       case GranuleState.Primed:
         this.setLayerColors(index, 0xffecbd, 0xffffec, 0xffd166);
