@@ -37,9 +37,12 @@ import {
   createSceneControls,
   createSceneInfo,
   createSceneNote,
+  createPresentationModeExitButton,
   getAppMount
 } from './utils/dom';
+import { parseInitialDeepLink } from './utils/deepLinks';
 import { FusionEventCounter } from './utils/fusionEventCounter';
+import { saveRendererScreenshot } from './utils/screenshot';
 import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyMode';
 import { createWelcomeOverlay } from './utils/welcomeOverlay';
 
@@ -114,6 +117,9 @@ const sceneState = createSceneStateController({
   ...defaultSceneState,
   selectedCellId: isletCellCluster.getDefaultSelectedCellId()
 });
+createPresentationModeExitButton(() => {
+  sceneState.setState({ presentationMode: false });
+});
 let animationSpeed = sceneState.getState().animationSpeed;
 let activeDemoMode: DemoMode = sceneState.getState().demoMode;
 updateSceneInfo();
@@ -154,6 +160,7 @@ function applySceneState(state: Readonly<SceneState>): void {
   selectedCellHighlight.setPatchVisible(state.showVascularContactPatches);
   selectedCellHighlight.setVectorVisible(state.showPolarityVectors);
   multicellReleaseParticles.setParticlesVisible(state.showMulticellReleaseParticles);
+  document.body.classList.toggle('presentation-mode', state.presentationMode);
   animationSpeed = state.animationSpeed;
 }
 
@@ -195,6 +202,7 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onShowBlenderBackdropsChange: (value) => sceneState.setState({ showBlenderBackdrops: value }),
   onBackdropOpacityChange: (value) => sceneState.setState({ backdropOpacity: value }),
   onMulticellLabelDetailChange: (value) => sceneState.setState({ multicellLabelDetail: value }),
+  onPresentationModeChange: (value) => sceneState.setState({ presentationMode: value }),
   onAnimationSpeedChange: (value) => sceneState.setState({ animationSpeed: value }),
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
@@ -213,6 +221,10 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   },
   onNextSelectedCell: () => {
     selectRelativeCell(1);
+  },
+  onSaveScreenshot: () => {
+    controls.update();
+    saveRendererScreenshot(renderer, scene, camera);
   },
   onResetGranules: () => {
     if (activeDemoMode === 'singleCell') {
@@ -244,7 +256,7 @@ sceneState.subscribe((state) => {
 
 const storyPanel = createStoryModePanel(storySteps, applyStoryStep);
 
-createWelcomeOverlay({
+const welcomeOverlay = createWelcomeOverlay({
   onStartStory: () => {
     storyPanel.applyStep(0);
   },
@@ -271,9 +283,33 @@ createWelcomeOverlay({
     applyCameraPreset('multicellOverview');
   }
 });
+applyInitialDeepLink();
 
 const clock = new THREE.Clock();
 let statusElapsed = 0;
+
+function applyInitialDeepLink(): void {
+  const deepLink = parseInitialDeepLink();
+
+  if (deepLink.storyIndex !== undefined) {
+    storyPanel.applyStep(deepLink.storyIndex);
+  } else if (deepLink.mode !== undefined) {
+    sceneState.setState({
+      demoMode: deepLink.mode,
+      openedSelectedCellDetail: false,
+      multicellLabelDetail: deepLink.mode === 'multicellVascular' ? 'compact' : sceneState.getState().multicellLabelDetail
+    });
+    applyCameraPreset(deepLink.mode === 'multicellVascular' ? 'multicellOverview' : 'overview');
+  }
+
+  if (deepLink.presentationMode) {
+    sceneState.setState({ presentationMode: true });
+  }
+
+  if (deepLink.hasValidParameter) {
+    welcomeOverlay.close();
+  }
+}
 
 function applyStoryStep(step: StoryStep): void {
   sceneState.setState(step.settings);

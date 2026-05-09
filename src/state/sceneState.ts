@@ -19,6 +19,7 @@ export interface SceneState {
   showBlenderBackdrops: boolean;
   backdropOpacity: number;
   multicellLabelDetail: MulticellLabelDetail;
+  presentationMode: boolean;
   animationSpeed: number;
 }
 
@@ -48,6 +49,7 @@ export const defaultSceneState: SceneState = {
   showBlenderBackdrops: false,
   backdropOpacity: 0.16,
   multicellLabelDetail: 'compact',
+  presentationMode: false,
   animationSpeed: 1
 };
 

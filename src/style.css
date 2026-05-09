@@ -424,6 +424,45 @@ canvas {
   z-index: 21;
 }
 
+.presentation-exit-button {
+  position: fixed;
+  right: 18px;
+  top: 16px;
+  display: none;
+  padding: 7px 10px;
+  border: 1px solid rgba(180, 210, 255, 0.34);
+  border-radius: 8px;
+  background: rgba(5, 8, 18, 0.58);
+  color: rgba(230, 240, 255, 0.88);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  z-index: 22;
+}
+
+.presentation-exit-button:hover {
+  background: rgba(35, 55, 88, 0.82);
+}
+
+body.presentation-mode .scene-info,
+body.presentation-mode .scene-controls,
+body.presentation-mode .story-panel {
+  display: none;
+}
+
+body.presentation-mode .presentation-exit-button {
+  display: block;
+}
+
+body.presentation-mode .help-about-button {
+  opacity: 0.68;
+}
+
+body.presentation-mode .help-about-button:hover {
+  opacity: 1;
+}
+
 @media (max-width: 760px) {
   .scene-info,
   .scene-controls,
@@ -457,6 +496,11 @@ canvas {
   .help-about-button {
     left: 10px;
     bottom: 72px;
+  }
+
+  .presentation-exit-button {
+    right: 10px;
+    top: 10px;
   }
 
   .overlay-panel-body {

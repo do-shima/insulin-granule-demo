@@ -78,11 +78,13 @@ export interface SceneControlCallbacks {
   onShowBlenderBackdropsChange: (value: boolean) => void;
   onBackdropOpacityChange: (value: number) => void;
   onMulticellLabelDetailChange: (value: MulticellLabelDetail) => void;
+  onPresentationModeChange: (value: boolean) => void;
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
   onOpenSelectedCellDetail: () => void;
   onPreviousSelectedCell: () => void;
   onNextSelectedCell: () => void;
+  onSaveScreenshot: () => void;
   onResetGranules: () => void;
 }
 
@@ -294,6 +296,11 @@ export function createSceneControls(
     value: initialValues.animationSpeed,
     onChange: callbacks.onAnimationSpeedChange
   });
+  const presentationModeControl = createCheckboxControl({
+    label: 'Presentation mode',
+    checked: initialValues.presentationMode,
+    onChange: callbacks.onPresentationModeChange
+  });
 
   const singleCellControls = document.createElement('div');
   singleCellControls.className = 'scene-control-section';
@@ -349,10 +356,13 @@ export function createSceneControls(
   body.append(
     modeControl.element,
     calciumControl.element,
+    presentationModeControl.element,
     singleCellControls,
     multicellControls,
     animationSpeedControl.element
   );
+
+  body.appendChild(createActionButton('Save screenshot', callbacks.onSaveScreenshot));
 
   const resetButton = document.createElement('button');
   resetButton.type = 'button';
@@ -382,6 +392,7 @@ export function createSceneControls(
       blenderBackdropsControl.setValue(values.showBlenderBackdrops);
       backdropOpacityControl.setValue(values.backdropOpacity);
       multicellLabelDetailControl.setValue(values.multicellLabelDetail);
+      presentationModeControl.setValue(values.presentationMode);
       animationSpeedControl.setValue(values.animationSpeed);
       singleCellControls.hidden = values.demoMode !== 'singleCell';
       multicellControls.hidden = values.demoMode !== 'multicellVascular';
@@ -423,6 +434,17 @@ export function createCollapsiblePanel(
   setCollapsed(initiallyCollapsed);
 
   return { body };
+}
+
+export function createPresentationModeExitButton(onExit: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'presentation-exit-button';
+  button.textContent = 'Exit presentation mode';
+  button.addEventListener('click', onExit);
+  document.body.appendChild(button);
+
+  return button;
 }
 
 export function shouldCollapsePanelsByDefault(): boolean {

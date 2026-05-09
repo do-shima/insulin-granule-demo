@@ -1,10 +1,9 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class AssetBackdrops extends THREE.Group {
-  private readonly loader = new GLTFLoader();
   private readonly loadedScenes: THREE.Object3D[] = [];
   private readonly assetPath: string;
+  private disposed = false;
   private opacity = 0.16;
 
   public constructor(assetPath: string, name: string) {
@@ -15,6 +14,8 @@ export class AssetBackdrops extends THREE.Group {
   }
 
   public dispose(): void {
+    this.disposed = true;
+
     for (const scene of this.loadedScenes) {
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -37,20 +38,34 @@ export class AssetBackdrops extends THREE.Group {
     }
   }
 
-  private loadOptionalBackdrop(): void {
-    this.loader.load(
-      withBasePath(this.assetPath),
-      (gltf) => {
-        gltf.scene.name = `${this.name} loaded asset`;
-        this.applyOpacity(gltf.scene);
-        this.loadedScenes.push(gltf.scene);
-        this.add(gltf.scene);
-      },
-      undefined,
-      () => {
-        console.info(`Optional backdrop not loaded: ${this.assetPath}. Using procedural scene fallback.`);
+  private async loadOptionalBackdrop(): Promise<void> {
+    try {
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+      if (this.disposed) {
+        return;
       }
-    );
+
+      const loader = new GLTFLoader();
+      loader.load(
+        withBasePath(this.assetPath),
+        (gltf) => {
+          if (this.disposed) {
+            return;
+          }
+
+          gltf.scene.name = `${this.name} loaded asset`;
+          this.applyOpacity(gltf.scene);
+          this.loadedScenes.push(gltf.scene);
+          this.add(gltf.scene);
+        },
+        undefined,
+        () => {
+          console.info(`Optional backdrop not loaded: ${this.assetPath}. Using procedural scene fallback.`);
+        }
+      );
+    } catch {
+      console.info(`Optional backdrop loader unavailable: ${this.assetPath}. Using procedural scene fallback.`);
+    }
   }
 
   private applyOpacity(scene: THREE.Object3D): void {
