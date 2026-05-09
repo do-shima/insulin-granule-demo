@@ -1,8 +1,18 @@
 import * as THREE from 'three';
-import { cellRadii, granuleCount, nucleusPosition, nucleusRadius } from '../biology/betaCellModel';
+import {
+  isInsideEllipsoid,
+  isOutsideNucleus,
+  randomPointInsideEllipsoid
+} from '../biology/betaCellGeometry';
+import {
+  cellRadii,
+  granuleCount,
+  nucleusExclusionMargin,
+  nucleusPosition,
+  nucleusRadius
+} from '../biology/betaCellModel';
 
 const GRANULE_STRIDE = 3;
-const NUCLEUS_CLEARANCE = 1.0;
 const MAX_INITIAL_PLACEMENT_ATTEMPTS = 10_000;
 
 export class GranuleSystem extends THREE.Group {
@@ -13,6 +23,7 @@ export class GranuleSystem extends THREE.Group {
   private readonly velocities: Float32Array;
   private readonly scales: Float32Array;
   private readonly dummy = new THREE.Object3D();
+  private readonly testPoint = new THREE.Vector3();
   private readonly granuleTotal: number;
 
   public constructor(total = granuleCount) {
@@ -145,14 +156,12 @@ export class GranuleSystem extends THREE.Group {
     const offset = index * GRANULE_STRIDE;
 
     for (let attempt = 0; attempt < MAX_INITIAL_PLACEMENT_ATTEMPTS; attempt += 1) {
-      const x = (Math.random() * 2 - 1) * cellRadii.x;
-      const y = (Math.random() * 2 - 1) * cellRadii.y;
-      const z = (Math.random() * 2 - 1) * cellRadii.z;
+      const point = randomPointInsideEllipsoid(cellRadii);
 
-      if (this.isInsideAllowedVolume(x, y, z)) {
-        this.positions[offset] = x;
-        this.positions[offset + 1] = y;
-        this.positions[offset + 2] = z;
+      if (isOutsideNucleus(point, nucleusPosition, nucleusRadius, nucleusExclusionMargin)) {
+        this.positions[offset] = point.x;
+        this.positions[offset + 1] = point.y;
+        this.positions[offset + 2] = point.z;
         return;
       }
     }
@@ -173,25 +182,11 @@ export class GranuleSystem extends THREE.Group {
   }
 
   private isInsideAllowedVolume(x: number, y: number, z: number): boolean {
-    const cellNormalized =
-      (x * x) / (cellRadii.x * cellRadii.x) +
-      (y * y) / (cellRadii.y * cellRadii.y) +
-      (z * z) / (cellRadii.z * cellRadii.z);
-
-    if (cellNormalized > 1.0) {
-      return false;
-    }
-
-    const nucleusDistanceX = x - nucleusPosition.x;
-    const nucleusDistanceY = y - nucleusPosition.y;
-    const nucleusDistanceZ = z - nucleusPosition.z;
-    const minNucleusDistance = nucleusRadius + NUCLEUS_CLEARANCE;
+    this.testPoint.set(x, y, z);
 
     return (
-      nucleusDistanceX * nucleusDistanceX +
-        nucleusDistanceY * nucleusDistanceY +
-        nucleusDistanceZ * nucleusDistanceZ >
-      minNucleusDistance * minNucleusDistance
+      isInsideEllipsoid(this.testPoint, cellRadii) &&
+      isOutsideNucleus(this.testPoint, nucleusPosition, nucleusRadius, nucleusExclusionMargin)
     );
   }
 

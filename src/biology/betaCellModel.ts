@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import {
+  isInsideEllipsoid,
+  isOutsideNucleus as isPointOutsideNucleus,
+  randomPointInsideEllipsoid
+} from './betaCellGeometry';
 
 export const cellRadii = {
   x: 17.5,
@@ -9,29 +14,21 @@ export const cellRadii = {
 export const nucleusPosition = new THREE.Vector3(-4.0, 0.0, 0.0);
 export const nucleusRadius = 4.2;
 export const granuleCount = 800;
+export const nucleusExclusionMargin = 1.0;
 
 export function isInsideCell(point: THREE.Vector3): boolean {
-  const normalized =
-    (point.x * point.x) / (cellRadii.x * cellRadii.x) +
-    (point.y * point.y) / (cellRadii.y * cellRadii.y) +
-    (point.z * point.z) / (cellRadii.z * cellRadii.z);
-
-  return normalized <= 1.0;
+  return isInsideEllipsoid(point, cellRadii);
 }
 
 export function isOutsideNucleus(point: THREE.Vector3): boolean {
-  return point.distanceTo(nucleusPosition) > nucleusRadius + 1.0;
+  return isPointOutsideNucleus(point, nucleusPosition, nucleusRadius, nucleusExclusionMargin);
 }
 
 export function randomPointInCell(): THREE.Vector3 {
   for (let attempt = 0; attempt < 10_000; attempt += 1) {
-    const point = new THREE.Vector3(
-      (Math.random() * 2 - 1) * cellRadii.x,
-      (Math.random() * 2 - 1) * cellRadii.y,
-      (Math.random() * 2 - 1) * cellRadii.z
-    );
+    const point = randomPointInsideEllipsoid(cellRadii);
 
-    if (isInsideCell(point) && isOutsideNucleus(point)) {
+    if (isOutsideNucleus(point)) {
       return point;
     }
   }
