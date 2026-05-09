@@ -5,6 +5,7 @@ import {
   projectToEllipsoidSurface
 } from './biology/betaCellGeometry';
 import { cellRadii, secretionPoleDirection } from './biology/betaCellModel';
+import { AssetBackdrops } from './objects/AssetBackdrops';
 import { CalciumField } from './objects/CalciumField';
 import { CapillaryNetwork } from './objects/CapillaryNetwork';
 import { EndoplasmicReticulum } from './objects/EndoplasmicReticulum';
@@ -48,6 +49,7 @@ const singleCellGroup = new THREE.Group();
 singleCellGroup.name = 'Single-cell granule demo';
 scene.add(singleCellGroup);
 
+singleCellGroup.add(new AssetBackdrops('assets/single_cell_backdrop.glb', 'Single-cell optional GLB backdrop'));
 singleCellGroup.add(createBetaCellShell());
 singleCellGroup.add(createNucleus());
 singleCellGroup.add(createGolgiRegion());
@@ -83,6 +85,7 @@ granules.setExocytosisEventHandler((event) => {
 singleCellGroup.add(granules);
 
 const multicellPlaceholder = new MulticellVascularPlaceholder();
+multicellPlaceholder.add(new AssetBackdrops('assets/multicell_backdrop.glb', 'Multicell optional GLB backdrop'));
 const capillaryNetwork = new CapillaryNetwork();
 const isletCellCluster = new IsletCellCluster(capillaryNetwork);
 const vascularContactPatches = new VascularContactPatches(isletCellCluster.getCells());
