@@ -18,6 +18,7 @@ import { createMembraneRing } from './objects/membraneRing';
 import { createNucleus } from './objects/nucleus';
 import { createSecretionPoleMarker } from './objects/SecretionPoleMarker';
 import { createSceneContext } from './scene/createSceneContext';
+import { createSceneStateController, defaultSceneState, type SceneState } from './state/sceneState';
 import {
   type CameraPresetId,
   createSceneControls,
@@ -66,65 +67,33 @@ scene.add(granules);
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
 sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
-let animationSpeed = 1;
 
-function setCalciumStimulation(value: number): void {
-  granules.setStimulationLevel(value);
-  calciumField.setStimulationLevel(value);
+const sceneState = createSceneStateController(defaultSceneState);
+let animationSpeed = sceneState.getState().animationSpeed;
+
+function applySceneState(state: Readonly<SceneState>): void {
+  granules.setStimulationLevel(state.calciumStimulation);
+  calciumField.setStimulationLevel(state.calciumStimulation);
+  endoplasmicReticulum.visible = state.showEr;
+  mitochondria.visible = state.showMitochondria;
+  microtubules.visible = state.showMicrotubules;
+  microtubules.setOpacity(state.microtubuleOpacity);
+  calciumField.visible = state.showCalciumField;
+  exocytosis.setParticlesVisible(state.showExocytosisParticles);
+  labels.setLabelsVisible(state.showLabels);
+  animationSpeed = state.animationSpeed;
 }
 
-function setMicrotubulesVisible(value: boolean): void {
-  microtubules.visible = value;
-}
-
-function setErVisible(value: boolean): void {
-  endoplasmicReticulum.visible = value;
-}
-
-function setMitochondriaVisible(value: boolean): void {
-  mitochondria.visible = value;
-}
-
-function setMicrotubuleOpacity(value: number): void {
-  microtubules.setOpacity(value);
-}
-
-function setCalciumFieldVisible(value: boolean): void {
-  calciumField.visible = value;
-}
-
-function setExocytosisParticlesVisible(value: boolean): void {
-  exocytosis.setParticlesVisible(value);
-}
-
-function setLabelsVisible(value: boolean): void {
-  labels.setLabelsVisible(value);
-}
-
-function setAnimationSpeed(value: number): void {
-  animationSpeed = value;
-}
-
-createSceneControls({
-  calciumStimulation: 0.15,
-  showEr: true,
-  showMitochondria: true,
-  showMicrotubules: true,
-  microtubuleOpacity: 0.34,
-  showCalciumField: true,
-  showExocytosisParticles: true,
-  showLabels: true,
-  animationSpeed
-}, {
-  onCalciumStimulationChange: setCalciumStimulation,
-  onShowErChange: setErVisible,
-  onShowMitochondriaChange: setMitochondriaVisible,
-  onShowMicrotubulesChange: setMicrotubulesVisible,
-  onMicrotubuleOpacityChange: setMicrotubuleOpacity,
-  onShowCalciumFieldChange: setCalciumFieldVisible,
-  onShowExocytosisParticlesChange: setExocytosisParticlesVisible,
-  onShowLabelsChange: setLabelsVisible,
-  onAnimationSpeedChange: setAnimationSpeed,
+const sceneControls = createSceneControls(sceneState.getState(), {
+  onCalciumStimulationChange: (value) => sceneState.setState({ calciumStimulation: value }),
+  onShowErChange: (value) => sceneState.setState({ showEr: value }),
+  onShowMitochondriaChange: (value) => sceneState.setState({ showMitochondria: value }),
+  onShowMicrotubulesChange: (value) => sceneState.setState({ showMicrotubules: value }),
+  onMicrotubuleOpacityChange: (value) => sceneState.setState({ microtubuleOpacity: value }),
+  onShowCalciumFieldChange: (value) => sceneState.setState({ showCalciumField: value }),
+  onShowExocytosisParticlesChange: (value) => sceneState.setState({ showExocytosisParticles: value }),
+  onShowLabelsChange: (value) => sceneState.setState({ showLabels: value }),
+  onAnimationSpeedChange: (value) => sceneState.setState({ animationSpeed: value }),
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
   },
@@ -136,40 +105,18 @@ createSceneControls({
   }
 });
 
+sceneState.subscribe((state) => {
+  applySceneState(state);
+  sceneControls.updateValues(state);
+});
+
 createStoryModePanel(storySteps, applyStoryStep);
 
 const clock = new THREE.Clock();
 let statusElapsed = 0;
 
 function applyStoryStep(step: StoryStep): void {
-  if (step.settings.calciumStimulation !== undefined) {
-    setCalciumStimulation(step.settings.calciumStimulation);
-  }
-
-  if (step.settings.showMicrotubules !== undefined) {
-    setMicrotubulesVisible(step.settings.showMicrotubules);
-  }
-
-  if (step.settings.microtubuleOpacity !== undefined) {
-    setMicrotubuleOpacity(step.settings.microtubuleOpacity);
-  }
-
-  if (step.settings.showCalciumField !== undefined) {
-    setCalciumFieldVisible(step.settings.showCalciumField);
-  }
-
-  if (step.settings.showExocytosisParticles !== undefined) {
-    setExocytosisParticlesVisible(step.settings.showExocytosisParticles);
-  }
-
-  if (step.settings.showLabels !== undefined) {
-    setLabelsVisible(step.settings.showLabels);
-  }
-
-  if (step.settings.animationSpeed !== undefined) {
-    setAnimationSpeed(step.settings.animationSpeed);
-  }
-
+  sceneState.setState(step.settings);
   applyCameraPreset(step.cameraPreset);
 }
 

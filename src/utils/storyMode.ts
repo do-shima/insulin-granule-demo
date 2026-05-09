@@ -1,10 +1,11 @@
-import type { CameraPresetId, SceneControlValues } from './dom';
+import type { SceneState } from '../state/sceneState';
+import type { CameraPresetId } from './dom';
 
 export interface StoryStep {
   readonly title: string;
   readonly text: string;
   readonly cameraPreset: CameraPresetId;
-  readonly settings: Partial<SceneControlValues>;
+  readonly settings: Partial<SceneState>;
 }
 
 export interface StoryModePanel {

@@ -1,4 +1,5 @@
 import type { GranuleStateCounts } from '../biology/granuleStates';
+import type { SceneState } from '../state/sceneState';
 import type { FusionEventCounts } from './fusionEventCounter';
 
 const stateDisplayRows = [
@@ -38,17 +39,7 @@ export interface SceneInfoPanel {
   updateCounts: (stateCounts: GranuleStateCounts, fusionEvents: FusionEventCounts) => void;
 }
 
-export interface SceneControlValues {
-  calciumStimulation: number;
-  showEr: boolean;
-  showMitochondria: boolean;
-  showMicrotubules: boolean;
-  microtubuleOpacity: number;
-  showCalciumField: boolean;
-  showExocytosisParticles: boolean;
-  showLabels: boolean;
-  animationSpeed: number;
-}
+export type SceneControlValues = SceneState;
 
 export type CameraPresetId = 'overview' | 'secretionPole' | 'transport';
 
@@ -64,6 +55,11 @@ export interface SceneControlCallbacks {
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
   onResetGranules: () => void;
+}
+
+export interface SceneControlsPanel {
+  element: HTMLDivElement;
+  updateValues: (values: SceneControlValues) => void;
 }
 
 export function createSceneInfo(granuleCount: number): SceneInfoPanel {
@@ -136,7 +132,7 @@ function createStateCountRow(label: string, count: number, total: number): strin
 export function createSceneControls(
   initialValues: SceneControlValues,
   callbacks: SceneControlCallbacks
-): HTMLDivElement {
+): SceneControlsPanel {
   const panel = document.createElement('div');
   panel.className = 'scene-controls';
 
@@ -145,77 +141,71 @@ export function createSceneControls(
   title.textContent = 'Schematic controls';
   panel.appendChild(title);
 
-  panel.appendChild(
-    createRangeControl({
-      label: 'Calcium stimulation',
-      min: 0,
-      max: 1,
-      step: 0.01,
-      value: initialValues.calciumStimulation,
-      onChange: callbacks.onCalciumStimulationChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show ER',
-      checked: initialValues.showEr,
-      onChange: callbacks.onShowErChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show mitochondria',
-      checked: initialValues.showMitochondria,
-      onChange: callbacks.onShowMitochondriaChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show microtubules',
-      checked: initialValues.showMicrotubules,
-      onChange: callbacks.onShowMicrotubulesChange
-    })
-  );
-  panel.appendChild(
-    createRangeControl({
-      label: 'Microtubule opacity',
-      min: 0,
-      max: 1,
-      step: 0.01,
-      value: initialValues.microtubuleOpacity,
-      onChange: callbacks.onMicrotubuleOpacityChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show calcium field',
-      checked: initialValues.showCalciumField,
-      onChange: callbacks.onShowCalciumFieldChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show release signal',
-      checked: initialValues.showExocytosisParticles,
-      onChange: callbacks.onShowExocytosisParticlesChange
-    })
-  );
-  panel.appendChild(
-    createCheckboxControl({
-      label: 'Show labels',
-      checked: initialValues.showLabels,
-      onChange: callbacks.onShowLabelsChange
-    })
-  );
-  panel.appendChild(
-    createRangeControl({
-      label: 'Animation speed',
-      min: 0.1,
-      max: 3,
-      step: 0.1,
-      value: initialValues.animationSpeed,
-      onChange: callbacks.onAnimationSpeedChange
-    })
+  const calciumControl = createRangeControl({
+    label: 'Calcium stimulation',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    value: initialValues.calciumStimulation,
+    onChange: callbacks.onCalciumStimulationChange
+  });
+  const erControl = createCheckboxControl({
+    label: 'Show ER',
+    checked: initialValues.showEr,
+    onChange: callbacks.onShowErChange
+  });
+  const mitochondriaControl = createCheckboxControl({
+    label: 'Show mitochondria',
+    checked: initialValues.showMitochondria,
+    onChange: callbacks.onShowMitochondriaChange
+  });
+  const microtubulesControl = createCheckboxControl({
+    label: 'Show microtubules',
+    checked: initialValues.showMicrotubules,
+    onChange: callbacks.onShowMicrotubulesChange
+  });
+  const microtubuleOpacityControl = createRangeControl({
+    label: 'Microtubule opacity',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    value: initialValues.microtubuleOpacity,
+    onChange: callbacks.onMicrotubuleOpacityChange
+  });
+  const calciumFieldControl = createCheckboxControl({
+    label: 'Show calcium field',
+    checked: initialValues.showCalciumField,
+    onChange: callbacks.onShowCalciumFieldChange
+  });
+  const exocytosisParticlesControl = createCheckboxControl({
+    label: 'Show release signal',
+    checked: initialValues.showExocytosisParticles,
+    onChange: callbacks.onShowExocytosisParticlesChange
+  });
+  const labelsControl = createCheckboxControl({
+    label: 'Show labels',
+    checked: initialValues.showLabels,
+    onChange: callbacks.onShowLabelsChange
+  });
+  const animationSpeedControl = createRangeControl({
+    label: 'Animation speed',
+    min: 0.1,
+    max: 3,
+    step: 0.1,
+    value: initialValues.animationSpeed,
+    onChange: callbacks.onAnimationSpeedChange
+  });
+
+  panel.append(
+    calciumControl.element,
+    erControl.element,
+    mitochondriaControl.element,
+    microtubulesControl.element,
+    microtubuleOpacityControl.element,
+    calciumFieldControl.element,
+    exocytosisParticlesControl.element,
+    labelsControl.element,
+    animationSpeedControl.element
   );
 
   const presetGroup = document.createElement('div');
@@ -236,7 +226,20 @@ export function createSceneControls(
 
   document.body.appendChild(panel);
 
-  return panel;
+  return {
+    element: panel,
+    updateValues: (values) => {
+      calciumControl.setValue(values.calciumStimulation);
+      erControl.setValue(values.showEr);
+      mitochondriaControl.setValue(values.showMitochondria);
+      microtubulesControl.setValue(values.showMicrotubules);
+      microtubuleOpacityControl.setValue(values.microtubuleOpacity);
+      calciumFieldControl.setValue(values.showCalciumField);
+      exocytosisParticlesControl.setValue(values.showExocytosisParticles);
+      labelsControl.setValue(values.showLabels);
+      animationSpeedControl.setValue(values.animationSpeed);
+    }
+  };
 }
 
 interface RangeControlOptions {
@@ -248,7 +251,12 @@ interface RangeControlOptions {
   onChange: (value: number) => void;
 }
 
-function createRangeControl(options: RangeControlOptions): HTMLLabelElement {
+interface RangeControl {
+  element: HTMLLabelElement;
+  setValue: (value: number) => void;
+}
+
+function createRangeControl(options: RangeControlOptions): RangeControl {
   const wrapper = document.createElement('label');
   wrapper.className = 'scene-control-row scene-control-range';
 
@@ -268,17 +276,21 @@ function createRangeControl(options: RangeControlOptions): HTMLLabelElement {
     const clamped = Math.min(Math.max(value, options.min), options.max);
     input.value = String(clamped);
     valueText.textContent = clamped.toFixed(options.step < 0.1 ? 2 : 1);
-    options.onChange(clamped);
   }
 
   input.addEventListener('input', () => {
-    setValue(Number(input.value));
+    const clamped = Math.min(Math.max(Number(input.value), options.min), options.max);
+    setValue(clamped);
+    options.onChange(clamped);
   });
 
   wrapper.append(labelText, valueText, input);
   setValue(options.value);
 
-  return wrapper;
+  return {
+    element: wrapper,
+    setValue
+  };
 }
 
 function createActionButton(label: string, onClick: () => void): HTMLButtonElement {
@@ -297,7 +309,12 @@ interface CheckboxControlOptions {
   onChange: (value: boolean) => void;
 }
 
-function createCheckboxControl(options: CheckboxControlOptions): HTMLLabelElement {
+interface CheckboxControl {
+  element: HTMLLabelElement;
+  setValue: (value: boolean) => void;
+}
+
+function createCheckboxControl(options: CheckboxControlOptions): CheckboxControl {
   const wrapper = document.createElement('label');
   wrapper.className = 'scene-control-row scene-control-checkbox';
 
@@ -313,7 +330,11 @@ function createCheckboxControl(options: CheckboxControlOptions): HTMLLabelElemen
   });
 
   wrapper.append(input, labelText);
-  options.onChange(options.checked);
 
-  return wrapper;
+  return {
+    element: wrapper,
+    setValue: (value) => {
+      input.checked = value;
+    }
+  };
 }
