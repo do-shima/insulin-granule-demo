@@ -1,4 +1,5 @@
 import type { GranuleStateCounts } from '../biology/granuleStates';
+import type { FusionEventCounts } from './fusionEventCounter';
 
 const stateDisplayRows = [
   { key: 'immature', label: 'Immature' },
@@ -23,7 +24,10 @@ export function getAppMount(): HTMLDivElement {
 export function createSceneNote(): HTMLDivElement {
   const label = document.createElement('div');
   label.className = 'scene-note';
-  label.textContent = 'Schematic visualization; not to scale.';
+  label.innerHTML = `
+    <div>Schematic visualization; not to scale.</div>
+    <div>Educational demo only; not a real secretion simulation.</div>
+  `;
   document.body.appendChild(label);
 
   return label;
@@ -31,11 +35,13 @@ export function createSceneNote(): HTMLDivElement {
 
 export interface SceneInfoPanel {
   element: HTMLDivElement;
-  updateStateCounts: (counts: GranuleStateCounts) => void;
+  updateCounts: (stateCounts: GranuleStateCounts, fusionEvents: FusionEventCounts) => void;
 }
 
 export interface SceneControlValues {
   calciumStimulation: number;
+  showEr: boolean;
+  showMitochondria: boolean;
   showMicrotubules: boolean;
   microtubuleOpacity: number;
   showCalciumField: boolean;
@@ -48,6 +54,8 @@ export type CameraPresetId = 'overview' | 'secretionPole' | 'transport';
 
 export interface SceneControlCallbacks {
   onCalciumStimulationChange: (value: number) => void;
+  onShowErChange: (value: boolean) => void;
+  onShowMitochondriaChange: (value: boolean) => void;
   onShowMicrotubulesChange: (value: boolean) => void;
   onMicrotubuleOpacityChange: (value: number) => void;
   onShowCalciumFieldChange: (value: boolean) => void;
@@ -62,7 +70,7 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   const info = document.createElement('div');
   info.className = 'scene-info';
 
-  function updateStateCounts(counts: GranuleStateCounts): void {
+  function updateCounts(counts: GranuleStateCounts, fusionEvents: FusionEventCounts): void {
     const accounted =
       counts.immature +
       counts.mature +
@@ -81,12 +89,26 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   <div>Pancreatic beta-cell schematic</div>
   <div>Granules: ${granuleCount}</div>
   <div>Counted states: ${accounted}</div>
+  <div class="state-counts-title">Schematic fusion events</div>
+  <div>Total schematic fusion events: ${fusionEvents.total}</div>
+  <div>Events in last 10 seconds: ${fusionEvents.recent}</div>
   <div class="state-counts-title">Schematic granule states</div>
+  <div class="scene-info-caveat">State counts are visual demo states, not measured biological counts.</div>
   <div class="state-counts">${stateRows}</div>
 `;
   }
 
-  updateStateCounts({
+  updateCounts(createZeroStateCounts(), { total: 0, recent: 0 });
+  document.body.appendChild(info);
+
+  return {
+    element: info,
+    updateCounts
+  };
+}
+
+function createZeroStateCounts(): GranuleStateCounts {
+  return {
     immature: 0,
     mature: 0,
     transporting: 0,
@@ -94,12 +116,6 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
     primed: 0,
     fusing: 0,
     released: 0
-  });
-  document.body.appendChild(info);
-
-  return {
-    element: info,
-    updateStateCounts
   };
 }
 
@@ -137,6 +153,20 @@ export function createSceneControls(
       step: 0.01,
       value: initialValues.calciumStimulation,
       onChange: callbacks.onCalciumStimulationChange
+    })
+  );
+  panel.appendChild(
+    createCheckboxControl({
+      label: 'Show ER',
+      checked: initialValues.showEr,
+      onChange: callbacks.onShowErChange
+    })
+  );
+  panel.appendChild(
+    createCheckboxControl({
+      label: 'Show mitochondria',
+      checked: initialValues.showMitochondria,
+      onChange: callbacks.onShowMitochondriaChange
     })
   );
   panel.appendChild(

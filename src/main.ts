@@ -6,8 +6,10 @@ import {
 } from './biology/betaCellGeometry';
 import { cellRadii, secretionPoleDirection } from './biology/betaCellModel';
 import { CalciumField } from './objects/CalciumField';
+import { EndoplasmicReticulum } from './objects/EndoplasmicReticulum';
 import { ExocytosisSystem } from './objects/ExocytosisSystem';
 import { GranuleSystem } from './objects/GranuleSystem';
+import { Mitochondria } from './objects/Mitochondria';
 import { MicrotubuleNetwork } from './objects/MicrotubuleNetwork';
 import { SchematicLabels } from './objects/SchematicLabels';
 import { createBetaCellShell } from './objects/betaCellShell';
@@ -23,6 +25,7 @@ import {
   createSceneNote,
   getAppMount
 } from './utils/dom';
+import { FusionEventCounter } from './utils/fusionEventCounter';
 import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyMode';
 
 const { scene, camera, renderer, controls } = createSceneContext(getAppMount());
@@ -33,6 +36,12 @@ scene.add(createGolgiRegion());
 scene.add(createMembraneRing());
 scene.add(createSecretionPoleMarker());
 
+const endoplasmicReticulum = new EndoplasmicReticulum();
+scene.add(endoplasmicReticulum);
+
+const mitochondria = new Mitochondria();
+scene.add(mitochondria);
+
 const calciumField = new CalciumField();
 scene.add(calciumField);
 
@@ -42,18 +51,21 @@ scene.add(microtubules);
 const exocytosis = new ExocytosisSystem();
 scene.add(exocytosis);
 
+const fusionEventCounter = new FusionEventCounter();
+
 const labels = new SchematicLabels();
 scene.add(labels);
 
 const granules = new GranuleSystem(undefined, microtubules);
 granules.setExocytosisEventHandler((event) => {
+  fusionEventCounter.recordEvent();
   exocytosis.trigger(event);
 });
 scene.add(granules);
 
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
-sceneInfo.updateStateCounts(granules.getStateCounts());
+sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
 let animationSpeed = 1;
 
 function setCalciumStimulation(value: number): void {
@@ -63,6 +75,14 @@ function setCalciumStimulation(value: number): void {
 
 function setMicrotubulesVisible(value: boolean): void {
   microtubules.visible = value;
+}
+
+function setErVisible(value: boolean): void {
+  endoplasmicReticulum.visible = value;
+}
+
+function setMitochondriaVisible(value: boolean): void {
+  mitochondria.visible = value;
 }
 
 function setMicrotubuleOpacity(value: number): void {
@@ -87,6 +107,8 @@ function setAnimationSpeed(value: number): void {
 
 createSceneControls({
   calciumStimulation: 0.15,
+  showEr: true,
+  showMitochondria: true,
   showMicrotubules: true,
   microtubuleOpacity: 0.34,
   showCalciumField: true,
@@ -95,6 +117,8 @@ createSceneControls({
   animationSpeed
 }, {
   onCalciumStimulationChange: setCalciumStimulation,
+  onShowErChange: setErVisible,
+  onShowMitochondriaChange: setMitochondriaVisible,
   onShowMicrotubulesChange: setMicrotubulesVisible,
   onMicrotubuleOpacityChange: setMicrotubuleOpacity,
   onShowCalciumFieldChange: setCalciumFieldVisible,
@@ -106,8 +130,9 @@ createSceneControls({
   },
   onResetGranules: () => {
     granules.reset();
+    fusionEventCounter.reset();
     exocytosis.resetEffects();
-    sceneInfo.updateStateCounts(granules.getStateCounts());
+    sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
   }
 });
 
@@ -180,9 +205,10 @@ function animate(): void {
 
   granules.update(sceneDeltaTime);
   calciumField.update(sceneDeltaTime);
+  fusionEventCounter.update(sceneDeltaTime);
   exocytosis.update(sceneDeltaTime);
   if (statusElapsed >= 0.5) {
-    sceneInfo.updateStateCounts(granules.getStateCounts());
+    sceneInfo.updateCounts(granules.getStateCounts(), fusionEventCounter.getCounts());
     statusElapsed = 0;
   }
 

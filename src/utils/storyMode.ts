@@ -81,7 +81,7 @@ export const storySteps: StoryStep[] = [
       showExocytosisParticles: true
     },
     text:
-      'Increased calcium stimulation raises the probability that primed granules fuse and release schematic insulin signal particles.'
+      'In this demo, increasing calcium stimulation increases the probability of schematic fusion events and signal particle release.'
   }
 ];
 
@@ -102,6 +102,10 @@ export function createStoryModePanel(
   const text = document.createElement('p');
   text.className = 'story-text';
 
+  const caveat = document.createElement('div');
+  caveat.className = 'story-caveat';
+  caveat.textContent = 'Demo visualization; not a quantitative model of insulin secretion.';
+
   const stepCounter = document.createElement('div');
   stepCounter.className = 'story-counter';
 
@@ -112,7 +116,7 @@ export function createStoryModePanel(
   const playButton = createStoryButton('Play');
   const nextButton = createStoryButton('Next');
   controls.append(previousButton, playButton, nextButton);
-  panel.append(eyebrow, title, text, stepCounter, controls);
+  panel.append(eyebrow, title, text, caveat, stepCounter, controls);
   document.body.appendChild(panel);
 
   let currentIndex = 0;

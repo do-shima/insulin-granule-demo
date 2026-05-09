@@ -26,6 +26,8 @@ npm run build
 
 This is a schematic visualization, not a quantitative simulation, and not to scale.
 
+Educational demo only. This visualization does not represent real insulin secretion kinetics, secretion rates, granule densities, or quantitative calcium-dependent dynamics. The animation is not a real secretion model: granule state transitions are illustrative, calcium stimulation changes event probability only for demonstration, displayed fusion events are not secretion rates, and granule densities, timing, and spatial localization are not calibrated to experimental data.
+
 ## Technical Stack
 
 - Vite

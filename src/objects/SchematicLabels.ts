@@ -32,6 +32,16 @@ const labelDefinitions: LabelDefinition[] = [
     scale: 2.4
   },
   {
+    text: 'schematic ER',
+    position: new THREE.Vector3(-7.5, 4.4, -3.6),
+    scale: 2.3
+  },
+  {
+    text: 'mitochondria',
+    position: new THREE.Vector3(7.2, -4.2, 3.8),
+    scale: 2.3
+  },
+  {
     text: 'insulin granules',
     position: new THREE.Vector3(4.2, 5.8, 6.0),
     scale: 2.8
