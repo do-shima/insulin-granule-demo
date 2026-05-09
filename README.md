@@ -2,6 +2,8 @@
 
 A schematic Three.js visualization of insulin secretory granules maturing, transporting, docking, priming, and fusing in a simplified pancreatic beta-cell.
 
+Live demo: https://do-shima.github.io/insulin-granule-demo/
+
 ## Screenshot
 
 ![Insulin granule schematic screenshot](docs/screenshot-overview.png)
@@ -21,6 +23,15 @@ npm run build
 3. Granules dock and prime near the plasma membrane, with a schematic secretion-pole region.
 4. Calcium stimulation increases fusion probability.
 5. Fusion events release schematic insulin signal particles.
+
+## Implemented Features
+
+- Guided story mode
+- Visual control panel
+- Toggleable schematic labels and camera presets
+- Schematic ER and mitochondria
+- Schematic fusion event counter
+- Demo-only scientific disclaimer
 
 ## Scientific Caveat
 
@@ -45,6 +56,4 @@ Educational demo only. This visualization does not represent real insulin secret
 ## Future Work
 
 - Blender GLB organelles
-- Labels
 - Secretion-pole refinement
-- Published GitHub Pages demo

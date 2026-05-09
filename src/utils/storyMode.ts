@@ -1,5 +1,5 @@
 import type { SceneState } from '../state/sceneState';
-import type { CameraPresetId } from './dom';
+import { createCollapsiblePanel, shouldCollapsePanelsByDefault, type CameraPresetId } from './dom';
 
 export interface StoryStep {
   readonly title: string;
@@ -92,10 +92,7 @@ export function createStoryModePanel(
 ): StoryModePanel {
   const panel = document.createElement('div');
   panel.className = 'story-panel';
-
-  const eyebrow = document.createElement('div');
-  eyebrow.className = 'story-eyebrow';
-  eyebrow.textContent = 'Guided story';
+  const { body } = createCollapsiblePanel(panel, 'Guided story', shouldCollapsePanelsByDefault());
 
   const title = document.createElement('div');
   title.className = 'story-title';
@@ -117,7 +114,7 @@ export function createStoryModePanel(
   const playButton = createStoryButton('Play');
   const nextButton = createStoryButton('Next');
   controls.append(previousButton, playButton, nextButton);
-  panel.append(eyebrow, title, text, caveat, stepCounter, controls);
+  body.append(title, text, caveat, stepCounter, controls);
   document.body.appendChild(panel);
 
   let currentIndex = 0;

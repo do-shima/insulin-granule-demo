@@ -12,6 +12,10 @@ const stateDisplayRows = [
   { key: 'released', label: 'Released' }
 ] as const;
 
+export interface CollapsiblePanelParts {
+  body: HTMLDivElement;
+}
+
 export function getAppMount(): HTMLDivElement {
   const mount = document.querySelector<HTMLDivElement>('#app');
 
@@ -65,6 +69,7 @@ export interface SceneControlsPanel {
 export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   const info = document.createElement('div');
   info.className = 'scene-info';
+  const { body } = createCollapsiblePanel(info, 'Insulin secretory granules', shouldCollapsePanelsByDefault());
 
   function updateCounts(counts: GranuleStateCounts, fusionEvents: FusionEventCounts): void {
     const accounted =
@@ -80,8 +85,7 @@ export function createSceneInfo(granuleCount: number): SceneInfoPanel {
       .map(({ key, label }) => createStateCountRow(label, counts[key], granuleCount))
       .join('');
 
-    info.innerHTML = `
-  <div class="scene-info-title">Insulin secretory granules</div>
+    body.innerHTML = `
   <div>Pancreatic beta-cell schematic</div>
   <div>Granules: ${granuleCount}</div>
   <div>Counted states: ${accounted}</div>
@@ -135,11 +139,7 @@ export function createSceneControls(
 ): SceneControlsPanel {
   const panel = document.createElement('div');
   panel.className = 'scene-controls';
-
-  const title = document.createElement('div');
-  title.className = 'scene-controls-title';
-  title.textContent = 'Schematic controls';
-  panel.appendChild(title);
+  const { body } = createCollapsiblePanel(panel, 'Schematic controls', shouldCollapsePanelsByDefault());
 
   const calciumControl = createRangeControl({
     label: 'Calcium stimulation',
@@ -196,7 +196,7 @@ export function createSceneControls(
     onChange: callbacks.onAnimationSpeedChange
   });
 
-  panel.append(
+  body.append(
     calciumControl.element,
     erControl.element,
     mitochondriaControl.element,
@@ -215,14 +215,14 @@ export function createSceneControls(
     createActionButton('Secretion pole', () => callbacks.onCameraPreset('secretionPole')),
     createActionButton('Transport view', () => callbacks.onCameraPreset('transport'))
   );
-  panel.appendChild(presetGroup);
+  body.appendChild(presetGroup);
 
   const resetButton = document.createElement('button');
   resetButton.type = 'button';
   resetButton.className = 'scene-control-button';
   resetButton.textContent = 'Reset granules';
   resetButton.addEventListener('click', callbacks.onResetGranules);
-  panel.appendChild(resetButton);
+  body.appendChild(resetButton);
 
   document.body.appendChild(panel);
 
@@ -240,6 +240,46 @@ export function createSceneControls(
       animationSpeedControl.setValue(values.animationSpeed);
     }
   };
+}
+
+export function createCollapsiblePanel(
+  panel: HTMLDivElement,
+  title: string,
+  initiallyCollapsed: boolean
+): CollapsiblePanelParts {
+  const header = document.createElement('div');
+  header.className = 'overlay-panel-header';
+
+  const titleElement = document.createElement('div');
+  titleElement.className = 'overlay-panel-title';
+  titleElement.textContent = title;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'overlay-collapse-button';
+
+  const body = document.createElement('div');
+  body.className = 'overlay-panel-body';
+
+  function setCollapsed(isCollapsed: boolean): void {
+    panel.classList.toggle('is-collapsed', isCollapsed);
+    button.textContent = isCollapsed ? 'Expand' : 'Collapse';
+    button.setAttribute('aria-expanded', String(!isCollapsed));
+  }
+
+  button.addEventListener('click', () => {
+    setCollapsed(!panel.classList.contains('is-collapsed'));
+  });
+
+  header.append(titleElement, button);
+  panel.append(header, body);
+  setCollapsed(initiallyCollapsed);
+
+  return { body };
+}
+
+export function shouldCollapsePanelsByDefault(): boolean {
+  return window.matchMedia('(max-width: 760px)').matches;
 }
 
 interface RangeControlOptions {
