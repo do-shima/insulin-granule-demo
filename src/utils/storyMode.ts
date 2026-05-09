@@ -91,7 +91,7 @@ export const storySteps: StoryStep[] = [
   },
   {
     title: '6. Multicell Islet-Scale View',
-    cameraPreset: 'overview',
+    cameraPreset: 'multicellOverview',
     settings: {
       demoMode: 'multicellVascular',
       calciumStimulation: 0.15,
@@ -105,7 +105,7 @@ export const storySteps: StoryStep[] = [
   },
   {
     title: '7. Capillary-Facing Beta-Cell Polarity',
-    cameraPreset: 'overview',
+    cameraPreset: 'capillaryPolarity',
     settings: {
       demoMode: 'multicellVascular',
       calciumStimulation: 0.2,
@@ -119,7 +119,7 @@ export const storySteps: StoryStep[] = [
   },
   {
     title: '8. Vascular-Facing Schematic Release Events',
-    cameraPreset: 'overview',
+    cameraPreset: 'vascularRelease',
     settings: {
       demoMode: 'multicellVascular',
       calciumStimulation: 0.85,

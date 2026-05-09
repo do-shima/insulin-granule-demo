@@ -53,7 +53,13 @@ export interface SceneInfoSnapshot {
 
 export type SceneControlValues = SceneState;
 
-export type CameraPresetId = 'overview' | 'secretionPole' | 'transport';
+export type CameraPresetId =
+  | 'overview'
+  | 'secretionPole'
+  | 'transport'
+  | 'multicellOverview'
+  | 'capillaryPolarity'
+  | 'vascularRelease';
 
 export interface SceneControlCallbacks {
   onDemoModeChange: (value: DemoMode) => void;
@@ -279,7 +285,10 @@ export function createSceneControls(
   presetGroup.append(
     createActionButton('Overview', () => callbacks.onCameraPreset('overview')),
     createActionButton('Secretion pole', () => callbacks.onCameraPreset('secretionPole')),
-    createActionButton('Transport view', () => callbacks.onCameraPreset('transport'))
+    createActionButton('Transport view', () => callbacks.onCameraPreset('transport')),
+    createActionButton('Multicell overview', () => callbacks.onCameraPreset('multicellOverview')),
+    createActionButton('Capillary polarity', () => callbacks.onCameraPreset('capillaryPolarity')),
+    createActionButton('Vascular release', () => callbacks.onCameraPreset('vascularRelease'))
   );
   body.appendChild(presetGroup);
 

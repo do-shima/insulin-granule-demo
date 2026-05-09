@@ -146,7 +146,7 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onDemoModeChange: (value) => {
     sceneState.setState({ demoMode: value });
     if (value === 'multicellVascular') {
-      applyCameraPreset('overview');
+      applyCameraPreset('multicellOverview');
     }
   },
   onCalciumStimulationChange: (value) => sceneState.setState({ calciumStimulation: value }),
@@ -211,6 +211,18 @@ function applyCameraPreset(preset: CameraPresetId): void {
     case 'overview':
       controls.target.set(0, 0, 0);
       camera.position.set(0, 10, 42);
+      break;
+    case 'multicellOverview':
+      controls.target.set(0, -0.6, 0);
+      camera.position.set(0, 12, 27);
+      break;
+    case 'capillaryPolarity':
+      controls.target.set(-0.5, -1.6, 1.1);
+      camera.position.set(-8.5, 5.2, 13.5);
+      break;
+    case 'vascularRelease':
+      controls.target.set(1.6, -2.8, 0.6);
+      camera.position.set(6.7, 1.8, 9.2);
       break;
   }
 
