@@ -24,7 +24,12 @@ import { createMembraneRing } from './objects/membraneRing';
 import { createNucleus } from './objects/nucleus';
 import { createSecretionPoleMarker } from './objects/SecretionPoleMarker';
 import { createSceneContext } from './scene/createSceneContext';
-import { createSceneStateController, defaultSceneState, type SceneState } from './state/sceneState';
+import {
+  createSceneStateController,
+  defaultSceneState,
+  type DemoMode,
+  type SceneState
+} from './state/sceneState';
 import {
   type CameraPresetId,
   createSceneControls,
@@ -93,22 +98,18 @@ scene.add(multicellPlaceholder);
 
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
-sceneInfo.updateCounts(
-  granules.getStateCounts(),
-  fusionEventCounter.getCounts(),
-  multicellReleaseEventCounter.getCounts()
-);
 
 const sceneState = createSceneStateController(defaultSceneState);
 let animationSpeed = sceneState.getState().animationSpeed;
-let isMulticellMode = sceneState.getState().demoMode === 'multicellVascular';
+let activeDemoMode: DemoMode = sceneState.getState().demoMode;
+updateSceneInfo();
 
 function applySceneState(state: Readonly<SceneState>): void {
   const isSingleCellMode = state.demoMode === 'singleCell';
 
   singleCellGroup.visible = isSingleCellMode;
   multicellPlaceholder.visible = state.demoMode === 'multicellVascular';
-  isMulticellMode = state.demoMode === 'multicellVascular';
+  activeDemoMode = state.demoMode;
   granules.setStimulationLevel(state.calciumStimulation);
   calciumField.setStimulationLevel(state.calciumStimulation);
   multicellReleaseParticles.setStimulationLevel(state.calciumStimulation);
@@ -127,6 +128,18 @@ function applySceneState(state: Readonly<SceneState>): void {
   polarityVectorField.setLabelsVisible(state.showLabels);
   multicellReleaseParticles.setParticlesVisible(state.showMulticellReleaseParticles);
   animationSpeed = state.animationSpeed;
+}
+
+function updateSceneInfo(): void {
+  const currentState = sceneState.getState();
+
+  sceneInfo.updateCounts({
+    demoMode: currentState.demoMode,
+    calciumStimulation: currentState.calciumStimulation,
+    stateCounts: granules.getStateCounts(),
+    fusionEvents: fusionEventCounter.getCounts(),
+    multicellReleaseEvents: multicellReleaseEventCounter.getCounts()
+  });
 }
 
 const sceneControls = createSceneControls(sceneState.getState(), {
@@ -152,22 +165,23 @@ const sceneControls = createSceneControls(sceneState.getState(), {
     applyCameraPreset(preset);
   },
   onResetGranules: () => {
-    granules.reset();
-    fusionEventCounter.reset();
-    multicellReleaseEventCounter.reset();
-    exocytosis.resetEffects();
-    multicellReleaseParticles.resetEffects();
-    sceneInfo.updateCounts(
-      granules.getStateCounts(),
-      fusionEventCounter.getCounts(),
-      multicellReleaseEventCounter.getCounts()
-    );
+    if (activeDemoMode === 'singleCell') {
+      granules.reset();
+      fusionEventCounter.reset();
+      exocytosis.resetEffects();
+    } else {
+      multicellReleaseEventCounter.reset();
+      multicellReleaseParticles.resetEffects();
+    }
+
+    updateSceneInfo();
   }
 });
 
 sceneState.subscribe((state) => {
   applySceneState(state);
   sceneControls.updateValues(state);
+  updateSceneInfo();
 });
 
 createStoryModePanel(storySteps, applyStoryStep);
@@ -210,20 +224,18 @@ function animate(): void {
   const sceneDeltaTime = deltaTime * animationSpeed;
   statusElapsed += deltaTime;
 
-  granules.update(sceneDeltaTime);
-  calciumField.update(sceneDeltaTime);
-  fusionEventCounter.update(sceneDeltaTime);
-  multicellReleaseEventCounter.update(sceneDeltaTime);
-  exocytosis.update(sceneDeltaTime);
-  if (isMulticellMode) {
+  if (activeDemoMode === 'singleCell') {
+    granules.update(sceneDeltaTime);
+    calciumField.update(sceneDeltaTime);
+    fusionEventCounter.update(sceneDeltaTime);
+    exocytosis.update(sceneDeltaTime);
+  } else {
+    multicellReleaseEventCounter.update(sceneDeltaTime);
     multicellReleaseParticles.update(sceneDeltaTime);
   }
+
   if (statusElapsed >= 0.5) {
-    sceneInfo.updateCounts(
-      granules.getStateCounts(),
-      fusionEventCounter.getCounts(),
-      multicellReleaseEventCounter.getCounts()
-    );
+    updateSceneInfo();
     statusElapsed = 0;
   }
 

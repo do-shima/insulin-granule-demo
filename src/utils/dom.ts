@@ -40,11 +40,15 @@ export function createSceneNote(): HTMLDivElement {
 
 export interface SceneInfoPanel {
   element: HTMLDivElement;
-  updateCounts: (
-    stateCounts: GranuleStateCounts,
-    fusionEvents: FusionEventCounts,
-    multicellReleaseEvents: FusionEventCounts
-  ) => void;
+  updateCounts: (snapshot: SceneInfoSnapshot) => void;
+}
+
+export interface SceneInfoSnapshot {
+  readonly demoMode: DemoMode;
+  readonly calciumStimulation: number;
+  readonly stateCounts: GranuleStateCounts;
+  readonly fusionEvents: FusionEventCounts;
+  readonly multicellReleaseEvents: FusionEventCounts;
 }
 
 export type SceneControlValues = SceneState;
@@ -77,50 +81,73 @@ export interface SceneControlsPanel {
 export function createSceneInfo(granuleCount: number): SceneInfoPanel {
   const info = document.createElement('div');
   info.className = 'scene-info';
-  const { body } = createCollapsiblePanel(info, 'Insulin secretory granules', shouldCollapsePanelsByDefault());
+  const { body } = createCollapsiblePanel(info, 'Demo status', shouldCollapsePanelsByDefault());
 
-  function updateCounts(
-    counts: GranuleStateCounts,
-    fusionEvents: FusionEventCounts,
-    multicellReleaseEvents: FusionEventCounts
-  ): void {
-    const accounted =
-      counts.immature +
-      counts.mature +
-      counts.transporting +
-      counts.docked +
-      counts.primed +
-      counts.fusing +
-      counts.released;
-
-    const stateRows = stateDisplayRows
-      .map(({ key, label }) => createStateCountRow(label, counts[key], granuleCount))
-      .join('');
-
-    body.innerHTML = `
-  <div>Pancreatic beta-cell schematic</div>
-  <div>Granules: ${granuleCount}</div>
-  <div>Counted states: ${accounted}</div>
-  <div class="state-counts-title">Schematic fusion events</div>
-  <div>Total schematic fusion events: ${fusionEvents.total}</div>
-  <div>Events in last 10 seconds: ${fusionEvents.recent}</div>
-  <div class="state-counts-title">Schematic multicell release events</div>
-  <div>Total schematic release events: ${multicellReleaseEvents.total}</div>
-  <div>Events in last 10 seconds: ${multicellReleaseEvents.recent}</div>
-  <div class="scene-info-caveat">Events show a vascular-facing bias for demo purposes, not measured secretion.</div>
-  <div class="state-counts-title">Schematic granule states</div>
-  <div class="scene-info-caveat">State counts are visual demo states, not measured biological counts.</div>
-  <div class="state-counts">${stateRows}</div>
-`;
+  function updateCounts(snapshot: SceneInfoSnapshot): void {
+    body.innerHTML =
+      snapshot.demoMode === 'singleCell'
+        ? createSingleCellInfo(snapshot, granuleCount)
+        : createMulticellInfo(snapshot);
   }
 
-  updateCounts(createZeroStateCounts(), { total: 0, recent: 0 }, { total: 0, recent: 0 });
+  updateCounts({
+    demoMode: 'singleCell',
+    calciumStimulation: 0.15,
+    stateCounts: createZeroStateCounts(),
+    fusionEvents: { total: 0, recent: 0 },
+    multicellReleaseEvents: { total: 0, recent: 0 }
+  });
   document.body.appendChild(info);
 
   return {
     element: info,
     updateCounts
   };
+}
+
+function createSingleCellInfo(snapshot: SceneInfoSnapshot, granuleCount: number): string {
+  const counts = snapshot.stateCounts;
+  const accounted =
+    counts.immature +
+    counts.mature +
+    counts.transporting +
+    counts.docked +
+    counts.primed +
+    counts.fusing +
+    counts.released;
+
+  const stateRows = stateDisplayRows
+    .map(({ key, label }) => createStateCountRow(label, counts[key], granuleCount))
+    .join('');
+
+  return `
+  <div class="scene-info-mode">Active mode: single-cell granule demo</div>
+  <div>Pancreatic beta-cell schematic</div>
+  <div>Calcium stimulation: ${snapshot.calciumStimulation.toFixed(2)}</div>
+  <div>Granules: ${granuleCount}</div>
+  <div>Counted states: ${accounted}</div>
+  <div class="state-counts-title">Single-cell schematic fusion events</div>
+  <div>Total schematic fusion events: ${snapshot.fusionEvents.total}</div>
+  <div>Events in last 10 seconds: ${snapshot.fusionEvents.recent}</div>
+  <div class="state-counts-title">Schematic granule states</div>
+  <div class="scene-info-caveat">State counts are visual demo states, not measured biological counts.</div>
+  <div class="state-counts">${stateRows}</div>
+  <div class="scene-info-caveat">Schematic visualization; not to scale. Educational demo only; not real secretion kinetics.</div>
+`;
+}
+
+function createMulticellInfo(snapshot: SceneInfoSnapshot): string {
+  return `
+  <div class="scene-info-mode">Active mode: multicell vascular polarity</div>
+  <div>Schematic beta-cell cluster and capillary network</div>
+  <div>Calcium stimulation: ${snapshot.calciumStimulation.toFixed(2)}</div>
+  <div class="state-counts-title">Schematic multicell release events</div>
+  <div>Total schematic release events: ${snapshot.multicellReleaseEvents.total}</div>
+  <div>Events in last 10 seconds: ${snapshot.multicellReleaseEvents.recent}</div>
+  <div class="scene-info-caveat">Events show a vascular-facing bias for demo purposes, not measured secretion.</div>
+  <div class="scene-info-caveat">Single-cell granule states and fusion events are paused while this mode is active.</div>
+  <div class="scene-info-caveat">Schematic visualization; not to scale. Educational demo only; not real secretion kinetics.</div>
+`;
 }
 
 function createZeroStateCounts(): GranuleStateCounts {
@@ -259,7 +286,7 @@ export function createSceneControls(
   const resetButton = document.createElement('button');
   resetButton.type = 'button';
   resetButton.className = 'scene-control-button';
-  resetButton.textContent = 'Reset granules';
+  resetButton.textContent = 'Reset active demo state';
   resetButton.addEventListener('click', callbacks.onResetGranules);
   body.appendChild(resetButton);
 

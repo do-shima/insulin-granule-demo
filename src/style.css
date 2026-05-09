@@ -106,6 +106,12 @@ canvas {
   font-weight: 700;
 }
 
+.scene-info-mode {
+  color: rgba(165, 243, 252, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .scene-info-caveat {
   margin-top: 3px;
   color: rgba(230, 240, 255, 0.72);
