@@ -8,8 +8,9 @@ import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
 import { createMembraneRing } from './objects/membraneRing';
 import { createNucleus } from './objects/nucleus';
+import { createSecretionPoleMarker } from './objects/SecretionPoleMarker';
 import { createSceneContext } from './scene/createSceneContext';
-import { createSceneInfo, createSceneNote, createStimulationControl, getAppMount } from './utils/dom';
+import { createSceneControls, createSceneInfo, createSceneNote, getAppMount } from './utils/dom';
 
 const { scene, camera, renderer, controls } = createSceneContext(getAppMount());
 
@@ -17,6 +18,7 @@ scene.add(createBetaCellShell());
 scene.add(createNucleus());
 scene.add(createGolgiRegion());
 scene.add(createMembraneRing());
+scene.add(createSecretionPoleMarker());
 
 const calciumField = new CalciumField();
 scene.add(calciumField);
@@ -36,9 +38,40 @@ scene.add(granules);
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
 sceneInfo.updateStateCounts(granules.getStateCounts());
-createStimulationControl(0.15, (value) => {
-  granules.setStimulationLevel(value);
-  calciumField.setStimulationLevel(value);
+let animationSpeed = 1;
+
+createSceneControls({
+  calciumStimulation: 0.15,
+  showMicrotubules: true,
+  microtubuleOpacity: 0.34,
+  showCalciumField: true,
+  showExocytosisParticles: true,
+  animationSpeed
+}, {
+  onCalciumStimulationChange: (value) => {
+    granules.setStimulationLevel(value);
+    calciumField.setStimulationLevel(value);
+  },
+  onShowMicrotubulesChange: (value) => {
+    microtubules.visible = value;
+  },
+  onMicrotubuleOpacityChange: (value) => {
+    microtubules.setOpacity(value);
+  },
+  onShowCalciumFieldChange: (value) => {
+    calciumField.visible = value;
+  },
+  onShowExocytosisParticlesChange: (value) => {
+    exocytosis.setParticlesVisible(value);
+  },
+  onAnimationSpeedChange: (value) => {
+    animationSpeed = value;
+  },
+  onResetGranules: () => {
+    granules.reset();
+    exocytosis.resetEffects();
+    sceneInfo.updateStateCounts(granules.getStateCounts());
+  }
 });
 
 const clock = new THREE.Clock();
@@ -48,11 +81,12 @@ function animate(): void {
   requestAnimationFrame(animate);
 
   const deltaTime = Math.min(clock.getDelta(), 0.05);
+  const sceneDeltaTime = deltaTime * animationSpeed;
   statusElapsed += deltaTime;
 
-  granules.update(deltaTime);
-  calciumField.update(deltaTime);
-  exocytosis.update(deltaTime);
+  granules.update(sceneDeltaTime);
+  calciumField.update(sceneDeltaTime);
+  exocytosis.update(sceneDeltaTime);
   if (statusElapsed >= 0.5) {
     sceneInfo.updateStateCounts(granules.getStateCounts());
     statusElapsed = 0;

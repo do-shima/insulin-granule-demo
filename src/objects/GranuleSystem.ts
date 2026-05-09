@@ -5,17 +5,21 @@ import {
   isOutsideNucleus,
   projectToEllipsoidSurface,
   randomPointInsideEllipsoid,
-  randomPointNearMembrane
+  randomPointNearMembrane,
+  randomPointNearSecretionPole
 } from '../biology/betaCellGeometry';
 import {
   cellRadii,
   granuleCount,
   nucleusExclusionMargin,
   nucleusPosition,
-  nucleusRadius
+  nucleusRadius,
+  secretionPoleDirection,
+  secretionPoleSpread
 } from '../biology/betaCellModel';
 import {
   GranuleState,
+  type GranuleStateCounts,
   createEmptyGranuleStateCounts,
   getGranuleStateName
 } from '../biology/granuleStates';
@@ -39,6 +43,7 @@ const BASAL_PRIMING_RATE = 0.004;
 const STIMULATED_PRIMING_RATE = 0.22;
 const BASAL_FUSION_RATE = 0.002;
 const STIMULATED_FUSION_RATE = 0.18;
+const SECRETION_POLE_BIAS = 0.86;
 
 export class GranuleSystem extends THREE.Group {
   private readonly shellMesh: THREE.InstancedMesh;
@@ -215,7 +220,7 @@ export class GranuleSystem extends THREE.Group {
     return this.granuleTotal;
   }
 
-  public getStateCounts(): Record<string, number> {
+  public getStateCounts(): GranuleStateCounts {
     const counts = createEmptyGranuleStateCounts();
 
     for (let index = 0; index < this.granuleTotal; index += 1) {
@@ -241,11 +246,16 @@ export class GranuleSystem extends THREE.Group {
         this.states[index] === GranuleState.Mature ||
         this.states[index] === GranuleState.Transporting
       ) {
-        this.placeNearMembrane(index, DOCKED_DISTANCE_FROM_MEMBRANE);
+        this.placeNearSecretionDomain(index, DOCKED_DISTANCE_FROM_MEMBRANE);
         this.setState(index, GranuleState.Docked);
         remaining -= 1;
       }
     }
+  }
+
+  public reset(): void {
+    this.transportRecruitElapsed = 0;
+    this.initializeGranules();
   }
 
   public dispose(): void {
@@ -276,10 +286,10 @@ export class GranuleSystem extends THREE.Group {
         this.randomizePosition(index);
         this.assignTransport(index);
       } else if (index >= primedStart) {
-        this.placeNearMembrane(index, PRIMED_DISTANCE_FROM_MEMBRANE);
+        this.placeNearSecretionDomain(index, PRIMED_DISTANCE_FROM_MEMBRANE);
         this.setState(index, GranuleState.Primed);
       } else if (index >= dockedStart) {
-        this.placeNearMembrane(index, DOCKED_DISTANCE_FROM_MEMBRANE);
+        this.placeNearSecretionDomain(index, DOCKED_DISTANCE_FROM_MEMBRANE);
         this.setState(index, GranuleState.Docked);
       } else {
         this.randomizePosition(index);
@@ -375,6 +385,33 @@ export class GranuleSystem extends THREE.Group {
     this.randomizePosition(index);
   }
 
+  private placeNearSecretionDomain(index: number, distanceFromMembrane: number): void {
+    if (Math.random() > SECRETION_POLE_BIAS) {
+      this.placeNearMembrane(index, distanceFromMembrane);
+      return;
+    }
+
+    const offset = index * GRANULE_STRIDE;
+
+    for (let attempt = 0; attempt < MAX_INITIAL_PLACEMENT_ATTEMPTS; attempt += 1) {
+      const point = randomPointNearSecretionPole(
+        cellRadii,
+        secretionPoleDirection,
+        secretionPoleSpread,
+        distanceFromMembrane
+      );
+
+      if (isOutsideNucleus(point, nucleusPosition, nucleusRadius, nucleusExclusionMargin)) {
+        this.positions[offset] = point.x;
+        this.positions[offset + 1] = point.y;
+        this.positions[offset + 2] = point.z;
+        return;
+      }
+    }
+
+    this.placeNearMembrane(index, distanceFromMembrane);
+  }
+
   private updateInstance(index: number, x: number, y: number, z: number): void {
     if (this.states[index] === GranuleState.Released) {
       this.dummy.scale.setScalar(0);
@@ -414,6 +451,15 @@ export class GranuleSystem extends THREE.Group {
       this.positions[offset + 1],
       this.positions[offset + 2]
     );
+
+    if (Math.random() < SECRETION_POLE_BIAS) {
+      this.placeNearSecretionDomain(index, 0.18);
+      this.testPoint.set(
+        this.positions[offset],
+        this.positions[offset + 1],
+        this.positions[offset + 2]
+      );
+    }
 
     const surfacePoint = projectToEllipsoidSurface(this.testPoint, cellRadii);
     const normal = getEllipsoidNormal(surfacePoint, cellRadii);
@@ -480,7 +526,7 @@ export class GranuleSystem extends THREE.Group {
 
     if (progress >= 0.98) {
       if (Math.random() < 0.78 + this.stimulationLevel * 0.12) {
-        this.writeTransportPosition(index, 1.0);
+        this.placeNearSecretionDomain(index, DOCKED_DISTANCE_FROM_MEMBRANE);
         this.setState(index, GranuleState.Docked);
       } else {
         this.placeNearMembrane(index, DOCKED_DISTANCE_FROM_MEMBRANE);

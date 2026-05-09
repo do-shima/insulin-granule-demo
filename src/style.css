@@ -50,34 +50,69 @@ canvas {
   pointer-events: none;
 }
 
-.stimulation-control {
+.scene-controls {
   position: fixed;
   right: 18px;
   top: 16px;
-  width: 220px;
+  width: 236px;
   padding: 10px 13px;
   border: 1px solid rgba(180, 210, 255, 0.35);
   border-radius: 8px;
   background: rgba(5, 8, 18, 0.72);
   color: rgba(230, 240, 255, 0.92);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.35;
   backdrop-filter: blur(8px);
 }
 
-.stimulation-control label {
-  display: inline-block;
-  margin-right: 8px;
+.scene-controls-title {
+  margin-bottom: 8px;
+  font-weight: 700;
 }
 
-.stimulation-value {
+.scene-control-row {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.scene-control-range {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.scene-control-range input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #67e8f9;
+}
+
+.scene-control-checkbox {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.scene-control-checkbox input {
+  accent-color: #67e8f9;
+}
+
+.scene-control-value {
   color: rgba(165, 243, 252, 0.95);
   font-variant-numeric: tabular-nums;
 }
 
-.stimulation-control input {
-  display: block;
+.scene-control-button {
   width: 100%;
-  margin-top: 8px;
-  accent-color: #67e8f9;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border: 1px solid rgba(180, 210, 255, 0.38);
+  border-radius: 8px;
+  background: rgba(20, 33, 58, 0.82);
+  color: rgba(230, 240, 255, 0.95);
+  font: inherit;
+  cursor: pointer;
+}
+
+.scene-control-button:hover {
+  background: rgba(35, 55, 88, 0.88);
 }

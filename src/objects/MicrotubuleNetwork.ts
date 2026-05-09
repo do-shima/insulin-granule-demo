@@ -45,6 +45,10 @@ export class MicrotubuleNetwork extends THREE.Group {
     this.paths[this.normalizePathIndex(pathIndex)].getPoint(THREE.MathUtils.clamp(t, 0, 1), target);
   }
 
+  public setOpacity(value: number): void {
+    this.material.opacity = THREE.MathUtils.clamp(value, 0, 1);
+  }
+
   public dispose(): void {
     for (const child of this.children) {
       if (child instanceof THREE.Mesh) {

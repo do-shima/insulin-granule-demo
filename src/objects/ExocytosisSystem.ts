@@ -82,6 +82,20 @@ export class ExocytosisSystem extends THREE.Group {
     this.updateParticles(deltaTime);
   }
 
+  public setParticlesVisible(value: boolean): void {
+    this.particleMesh.visible = value;
+  }
+
+  public resetEffects(): void {
+    for (const ring of this.rings) {
+      ring.visible = false;
+      ring.material.opacity = 0;
+    }
+
+    this.particleActive.fill(0);
+    this.hideAllParticles();
+  }
+
   public dispose(): void {
     this.ringGeometry.dispose();
     this.particleGeometry.dispose();

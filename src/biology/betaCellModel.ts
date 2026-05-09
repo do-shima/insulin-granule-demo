@@ -15,6 +15,8 @@ export const nucleusPosition = new THREE.Vector3(-4.0, 0.0, 0.0);
 export const nucleusRadius = 4.2;
 export const granuleCount = 800;
 export const nucleusExclusionMargin = 1.0;
+export const secretionPoleDirection = new THREE.Vector3(0.82, -0.08, 0.56).normalize();
+export const secretionPoleSpread = 0.36;
 
 export function isInsideCell(point: THREE.Vector3): boolean {
   return isInsideEllipsoid(point, cellRadii);

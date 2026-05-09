@@ -21,8 +21,9 @@ export const granuleStateNames = [
 ] as const;
 
 export type GranuleStateName = (typeof granuleStateNames)[number];
+export type GranuleStateCounts = Record<GranuleStateName, number>;
 
-export function createEmptyGranuleStateCounts(): Record<string, number> {
+export function createEmptyGranuleStateCounts(): GranuleStateCounts {
   return {
     immature: 0,
     mature: 0,

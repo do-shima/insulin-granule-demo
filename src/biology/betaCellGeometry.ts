@@ -118,6 +118,37 @@ export function randomPointNearMembrane(
   );
 }
 
+export function randomPointNearSecretionPole(
+  radii: EllipsoidRadii,
+  poleDirection: THREE.Vector3,
+  spread: number,
+  distanceFromMembrane: number,
+  rng: RandomSource = DEFAULT_RNG
+): THREE.Vector3 {
+  const clampedSpread = Math.max(spread, 0.001);
+  const direction = poleDirection.clone().normalize();
+
+  for (let attempt = 0; attempt < MAX_RANDOM_ATTEMPTS; attempt += 1) {
+    const candidate = new THREE.Vector3(
+      direction.x + (rng() * 2 - 1) * clampedSpread,
+      direction.y + (rng() * 2 - 1) * clampedSpread,
+      direction.z + (rng() * 2 - 1) * clampedSpread
+    );
+
+    if (candidate.lengthSq() <= Number.EPSILON) {
+      continue;
+    }
+
+    candidate.normalize();
+    const surfacePoint = projectToEllipsoidSurface(candidate, radii);
+    const normal = getEllipsoidNormal(surfacePoint, radii);
+
+    return surfacePoint.addScaledVector(normal, -distanceFromMembrane);
+  }
+
+  return randomPointNearMembrane(radii, distanceFromMembrane, rng);
+}
+
 export function isOutsideNucleus(
   point: THREE.Vector3,
   nucleusPosition: THREE.Vector3,
