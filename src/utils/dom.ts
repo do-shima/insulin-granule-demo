@@ -76,6 +76,8 @@ export interface SceneControlCallbacks {
   onShowMulticellReleaseParticlesChange: (value: boolean) => void;
   onAnimationSpeedChange: (value: number) => void;
   onCameraPreset: (preset: CameraPresetId) => void;
+  onPreviousSelectedCell: () => void;
+  onNextSelectedCell: () => void;
   onResetGranules: () => void;
 }
 
@@ -291,6 +293,14 @@ export function createSceneControls(
     createActionButton('Vascular release', () => callbacks.onCameraPreset('vascularRelease'))
   );
   body.appendChild(presetGroup);
+
+  const selectedCellGroup = document.createElement('div');
+  selectedCellGroup.className = 'scene-control-button-group';
+  selectedCellGroup.append(
+    createActionButton('Previous selected cell', callbacks.onPreviousSelectedCell),
+    createActionButton('Next selected cell', callbacks.onNextSelectedCell)
+  );
+  body.appendChild(selectedCellGroup);
 
   const resetButton = document.createElement('button');
   resetButton.type = 'button';

@@ -43,6 +43,28 @@ export class IsletCellCluster extends THREE.Group {
     return this.cells;
   }
 
+  public getCellById(id: number): IsletCellModel {
+    const wrappedId = ((Math.floor(id) % this.cells.length) + this.cells.length) % this.cells.length;
+
+    return this.cells[wrappedId];
+  }
+
+  public getCellCount(): number {
+    return this.cells.length;
+  }
+
+  public getDefaultSelectedCellId(): number {
+    let selectedCell = this.cells[0];
+
+    for (const cell of this.cells) {
+      if (cell.capillaryDistance < selectedCell.capillaryDistance) {
+        selectedCell = cell;
+      }
+    }
+
+    return selectedCell.id;
+  }
+
   public dispose(): void {
     this.geometry.dispose();
     this.material.dispose();

@@ -17,6 +17,7 @@ import { MulticellVascularPlaceholder } from './objects/MulticellVascularPlaceho
 import { MulticellReleaseParticles } from './objects/MulticellReleaseParticles';
 import { PolarityVectorField } from './objects/PolarityVectorField';
 import { SchematicLabels } from './objects/SchematicLabels';
+import { SelectedCellHighlight } from './objects/SelectedCellHighlight';
 import { VascularContactPatches } from './objects/VascularContactPatches';
 import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
@@ -85,6 +86,9 @@ const capillaryNetwork = new CapillaryNetwork();
 const isletCellCluster = new IsletCellCluster(capillaryNetwork);
 const vascularContactPatches = new VascularContactPatches(isletCellCluster.getCells());
 const polarityVectorField = new PolarityVectorField(isletCellCluster.getCells());
+const selectedCellHighlight = new SelectedCellHighlight(
+  isletCellCluster.getCellById(isletCellCluster.getDefaultSelectedCellId())
+);
 const multicellReleaseParticles = new MulticellReleaseParticles(isletCellCluster.getCells());
 multicellReleaseParticles.setEventHandler(() => {
   multicellReleaseEventCounter.recordEvent();
@@ -92,6 +96,7 @@ multicellReleaseParticles.setEventHandler(() => {
 multicellPlaceholder.add(isletCellCluster);
 multicellPlaceholder.add(vascularContactPatches);
 multicellPlaceholder.add(polarityVectorField);
+multicellPlaceholder.add(selectedCellHighlight);
 multicellPlaceholder.add(multicellReleaseParticles);
 multicellPlaceholder.add(capillaryNetwork);
 scene.add(multicellPlaceholder);
@@ -99,7 +104,10 @@ scene.add(multicellPlaceholder);
 createSceneNote();
 const sceneInfo = createSceneInfo(granules.getCount());
 
-const sceneState = createSceneStateController(defaultSceneState);
+const sceneState = createSceneStateController({
+  ...defaultSceneState,
+  selectedCellId: isletCellCluster.getDefaultSelectedCellId()
+});
 let animationSpeed = sceneState.getState().animationSpeed;
 let activeDemoMode: DemoMode = sceneState.getState().demoMode;
 updateSceneInfo();
@@ -126,6 +134,10 @@ function applySceneState(state: Readonly<SceneState>): void {
   vascularContactPatches.setLabelsVisible(state.showLabels);
   polarityVectorField.setVectorsVisible(state.showPolarityVectors);
   polarityVectorField.setLabelsVisible(state.showLabels);
+  selectedCellHighlight.setSelectedCell(isletCellCluster.getCellById(state.selectedCellId));
+  selectedCellHighlight.setLabelsVisible(state.showLabels);
+  selectedCellHighlight.setPatchVisible(state.showVascularContactPatches);
+  selectedCellHighlight.setVectorVisible(state.showPolarityVectors);
   multicellReleaseParticles.setParticlesVisible(state.showMulticellReleaseParticles);
   animationSpeed = state.animationSpeed;
 }
@@ -164,6 +176,12 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onCameraPreset: (preset) => {
     applyCameraPreset(preset);
   },
+  onPreviousSelectedCell: () => {
+    selectRelativeCell(-1);
+  },
+  onNextSelectedCell: () => {
+    selectRelativeCell(1);
+  },
   onResetGranules: () => {
     if (activeDemoMode === 'singleCell') {
       granules.reset();
@@ -177,6 +195,14 @@ const sceneControls = createSceneControls(sceneState.getState(), {
     updateSceneInfo();
   }
 });
+
+function selectRelativeCell(offset: number): void {
+  const currentSelectedCellId = sceneState.getState().selectedCellId;
+  const cellCount = isletCellCluster.getCellCount();
+  const selectedCellId = ((currentSelectedCellId + offset) % cellCount + cellCount) % cellCount;
+
+  sceneState.setState({ selectedCellId });
+}
 
 sceneState.subscribe((state) => {
   applySceneState(state);

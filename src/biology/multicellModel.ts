@@ -12,6 +12,7 @@ export interface IsletCellModel {
   readonly center: THREE.Vector3;
   readonly radii: THREE.Vector3;
   readonly nearestCapillaryPoint: THREE.Vector3;
+  readonly capillaryDistance: number;
   readonly polarityDirection: THREE.Vector3;
   readonly hasSingleCapillaryContact: boolean;
   readonly hasMultipleCapillaryContacts: boolean;
@@ -47,6 +48,7 @@ export function createIsletCellModels(
         0.95 + rng() * 0.4
       ),
       nearestCapillaryPoint: nearest.point,
+      capillaryDistance: nearest.distance,
       polarityDirection,
       hasSingleCapillaryContact: contactCount === 1,
       hasMultipleCapillaryContacts: contactCount > 1,
