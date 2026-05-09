@@ -113,6 +113,17 @@ canvas {
   cursor: pointer;
 }
 
+.scene-control-button-group {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.scene-control-button-group .scene-control-button {
+  margin-top: 0;
+  text-align: left;
+}
+
 .scene-control-button:hover {
   background: rgba(35, 55, 88, 0.88);
 }

@@ -30,8 +30,11 @@ export interface SceneControlValues {
   microtubuleOpacity: number;
   showCalciumField: boolean;
   showExocytosisParticles: boolean;
+  showLabels: boolean;
   animationSpeed: number;
 }
+
+export type CameraPresetId = 'overview' | 'secretionPole' | 'transport';
 
 export interface SceneControlCallbacks {
   onCalciumStimulationChange: (value: number) => void;
@@ -39,7 +42,9 @@ export interface SceneControlCallbacks {
   onMicrotubuleOpacityChange: (value: number) => void;
   onShowCalciumFieldChange: (value: boolean) => void;
   onShowExocytosisParticlesChange: (value: boolean) => void;
+  onShowLabelsChange: (value: boolean) => void;
   onAnimationSpeedChange: (value: number) => void;
+  onCameraPreset: (preset: CameraPresetId) => void;
   onResetGranules: () => void;
 }
 
@@ -143,6 +148,13 @@ export function createSceneControls(
     })
   );
   panel.appendChild(
+    createCheckboxControl({
+      label: 'Show labels',
+      checked: initialValues.showLabels,
+      onChange: callbacks.onShowLabelsChange
+    })
+  );
+  panel.appendChild(
     createRangeControl({
       label: 'Animation speed',
       min: 0.1,
@@ -152,6 +164,15 @@ export function createSceneControls(
       onChange: callbacks.onAnimationSpeedChange
     })
   );
+
+  const presetGroup = document.createElement('div');
+  presetGroup.className = 'scene-control-button-group';
+  presetGroup.append(
+    createActionButton('Overview', () => callbacks.onCameraPreset('overview')),
+    createActionButton('Secretion pole', () => callbacks.onCameraPreset('secretionPole')),
+    createActionButton('Transport view', () => callbacks.onCameraPreset('transport'))
+  );
+  panel.appendChild(presetGroup);
 
   const resetButton = document.createElement('button');
   resetButton.type = 'button';
@@ -205,6 +226,16 @@ function createRangeControl(options: RangeControlOptions): HTMLLabelElement {
   setValue(options.value);
 
   return wrapper;
+}
+
+function createActionButton(label: string, onClick: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'scene-control-button';
+  button.textContent = label;
+  button.addEventListener('click', onClick);
+
+  return button;
 }
 
 interface CheckboxControlOptions {
