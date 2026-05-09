@@ -268,6 +268,14 @@ canvas {
   background: rgba(35, 55, 88, 0.88);
 }
 
+.scene-control-feedback {
+  min-height: 15px;
+  margin-top: 4px;
+  color: rgba(165, 243, 252, 0.9);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
 .story-panel {
   position: fixed;
   right: 18px;
@@ -424,11 +432,18 @@ canvas {
   z-index: 21;
 }
 
-.presentation-exit-button {
+.presentation-toolbar {
   position: fixed;
   right: 18px;
   top: 16px;
   display: none;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 6px;
+  z-index: 22;
+}
+
+.presentation-toolbar-button {
   padding: 7px 10px;
   border: 1px solid rgba(180, 210, 255, 0.34);
   border-radius: 8px;
@@ -438,11 +453,19 @@ canvas {
   font-size: 12px;
   cursor: pointer;
   backdrop-filter: blur(8px);
-  z-index: 22;
 }
 
-.presentation-exit-button:hover {
+.presentation-toolbar-button:hover {
   background: rgba(35, 55, 88, 0.82);
+}
+
+.presentation-toolbar-feedback {
+  grid-column: 1 / -1;
+  min-height: 14px;
+  color: rgba(165, 243, 252, 0.9);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: right;
 }
 
 body.presentation-mode .scene-info,
@@ -451,8 +474,8 @@ body.presentation-mode .story-panel {
   display: none;
 }
 
-body.presentation-mode .presentation-exit-button {
-  display: block;
+body.presentation-mode .presentation-toolbar {
+  display: grid;
 }
 
 body.presentation-mode .help-about-button {
@@ -498,7 +521,7 @@ body.presentation-mode .help-about-button:hover {
     bottom: 72px;
   }
 
-  .presentation-exit-button {
+  .presentation-toolbar {
     right: 10px;
     top: 10px;
   }

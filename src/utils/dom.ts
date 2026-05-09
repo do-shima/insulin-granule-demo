@@ -84,6 +84,7 @@ export interface SceneControlCallbacks {
   onOpenSelectedCellDetail: () => void;
   onPreviousSelectedCell: () => void;
   onNextSelectedCell: () => void;
+  onCopyShareLink: () => Promise<boolean>;
   onSaveScreenshot: () => void;
   onResetGranules: () => void;
 }
@@ -362,6 +363,13 @@ export function createSceneControls(
     animationSpeedControl.element
   );
 
+  const copyShareButton = createActionButton('Copy share link', () => {
+    void handleCopyShareLink();
+  });
+  const copyShareFeedback = document.createElement('div');
+  copyShareFeedback.className = 'scene-control-feedback';
+  copyShareFeedback.setAttribute('aria-live', 'polite');
+  body.append(copyShareButton, copyShareFeedback);
   body.appendChild(createActionButton('Save screenshot', callbacks.onSaveScreenshot));
 
   const resetButton = document.createElement('button');
@@ -372,6 +380,7 @@ export function createSceneControls(
   body.appendChild(resetButton);
 
   document.body.appendChild(panel);
+  let copyFeedbackTimer: number | undefined;
 
   return {
     element: panel,
@@ -398,6 +407,24 @@ export function createSceneControls(
       multicellControls.hidden = values.demoMode !== 'multicellVascular';
     }
   };
+
+  async function handleCopyShareLink(): Promise<void> {
+    const copied = await callbacks.onCopyShareLink();
+    showCopyFeedback(copied ? 'Copied' : 'Copy manually from prompt');
+  }
+
+  function showCopyFeedback(message: string): void {
+    copyShareFeedback.textContent = message;
+
+    if (copyFeedbackTimer !== undefined) {
+      window.clearTimeout(copyFeedbackTimer);
+    }
+
+    copyFeedbackTimer = window.setTimeout(() => {
+      copyShareFeedback.textContent = '';
+      copyFeedbackTimer = undefined;
+    }, 1800);
+  }
 }
 
 export function createCollapsiblePanel(
@@ -436,13 +463,53 @@ export function createCollapsiblePanel(
   return { body };
 }
 
-export function createPresentationModeExitButton(onExit: () => void): HTMLButtonElement {
+export function createPresentationModeToolbar(
+  onCopyShareLink: () => Promise<boolean>,
+  onExit: () => void
+): HTMLDivElement {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'presentation-toolbar';
+
+  const feedback = document.createElement('div');
+  feedback.className = 'presentation-toolbar-feedback';
+  feedback.setAttribute('aria-live', 'polite');
+
+  const copyButton = createPresentationToolbarButton('Copy link', () => {
+    void handleCopyShareLink();
+  });
+  const exitButton = createPresentationToolbarButton('Exit presentation mode', onExit);
+  toolbar.append(copyButton, exitButton, feedback);
+  document.body.appendChild(toolbar);
+
+  let feedbackTimer: number | undefined;
+
+  async function handleCopyShareLink(): Promise<void> {
+    const copied = await onCopyShareLink();
+    showFeedback(copied ? 'Copied' : 'Copy manually from prompt');
+  }
+
+  function showFeedback(message: string): void {
+    feedback.textContent = message;
+
+    if (feedbackTimer !== undefined) {
+      window.clearTimeout(feedbackTimer);
+    }
+
+    feedbackTimer = window.setTimeout(() => {
+      feedback.textContent = '';
+      feedbackTimer = undefined;
+    }, 1800);
+  }
+
+  return toolbar;
+}
+
+function createPresentationToolbarButton(label: string, onClick: () => void): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'presentation-exit-button';
-  button.textContent = 'Exit presentation mode';
-  button.addEventListener('click', onExit);
-  document.body.appendChild(button);
+  button.className = 'presentation-toolbar-button';
+  button.textContent = label;
+  button.addEventListener('click', onClick);
 
   return button;
 }

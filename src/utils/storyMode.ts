@@ -157,7 +157,7 @@ export const storySteps: StoryStep[] = [
 
 export function createStoryModePanel(
   steps: readonly StoryStep[],
-  onStepChange: (step: StoryStep) => void
+  onStepChange: (step: StoryStep, index: number) => void
 ): StoryModePanel {
   const panel = document.createElement('div');
   panel.className = 'story-panel';
@@ -201,7 +201,7 @@ export function createStoryModePanel(
     stepCounter.textContent = `${currentIndex + 1} / ${steps.length}`;
     previousButton.disabled = currentIndex === 0;
     nextButton.disabled = currentIndex === steps.length - 1;
-    onStepChange(step);
+    onStepChange(step, currentIndex);
   }
 
   function stopAutoPlay(): void {

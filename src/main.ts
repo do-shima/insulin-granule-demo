@@ -37,12 +37,13 @@ import {
   createSceneControls,
   createSceneInfo,
   createSceneNote,
-  createPresentationModeExitButton,
+  createPresentationModeToolbar,
   getAppMount
 } from './utils/dom';
 import { parseInitialDeepLink } from './utils/deepLinks';
 import { FusionEventCounter } from './utils/fusionEventCounter';
 import { saveRendererScreenshot } from './utils/screenshot';
+import { copyTextToClipboard, createShareUrl, sceneStateMatchesSettings } from './utils/shareLinks';
 import { createStoryModePanel, storySteps, type StoryStep } from './utils/storyMode';
 import { createWelcomeOverlay } from './utils/welcomeOverlay';
 
@@ -117,11 +118,12 @@ const sceneState = createSceneStateController({
   ...defaultSceneState,
   selectedCellId: isletCellCluster.getDefaultSelectedCellId()
 });
-createPresentationModeExitButton(() => {
+createPresentationModeToolbar(copyCurrentShareLink, () => {
   sceneState.setState({ presentationMode: false });
 });
 let animationSpeed = sceneState.getState().animationSpeed;
 let activeDemoMode: DemoMode = sceneState.getState().demoMode;
+let activeStoryIndex: number | undefined;
 updateSceneInfo();
 
 function applySceneState(state: Readonly<SceneState>): void {
@@ -222,6 +224,7 @@ const sceneControls = createSceneControls(sceneState.getState(), {
   onNextSelectedCell: () => {
     selectRelativeCell(1);
   },
+  onCopyShareLink: copyCurrentShareLink,
   onSaveScreenshot: () => {
     controls.update();
     saveRendererScreenshot(renderer, scene, camera);
@@ -246,6 +249,26 @@ function selectRelativeCell(offset: number): void {
   const selectedCellId = ((currentSelectedCellId + offset) % cellCount + cellCount) % cellCount;
 
   sceneState.setState({ selectedCellId });
+}
+
+function getMatchingStoryIndexForShare(state: Readonly<SceneState>): number | undefined {
+  if (activeStoryIndex === undefined) {
+    return undefined;
+  }
+
+  const storyStep = storySteps[activeStoryIndex];
+  if (!storyStep || !sceneStateMatchesSettings(state, storyStep.settings)) {
+    return undefined;
+  }
+
+  return activeStoryIndex;
+}
+
+function copyCurrentShareLink(): Promise<boolean> {
+  const state = sceneState.getState();
+  const storyIndex = getMatchingStoryIndexForShare(state);
+
+  return copyTextToClipboard(createShareUrl(state, storyIndex));
 }
 
 sceneState.subscribe((state) => {
@@ -311,7 +334,8 @@ function applyInitialDeepLink(): void {
   }
 }
 
-function applyStoryStep(step: StoryStep): void {
+function applyStoryStep(step: StoryStep, index: number): void {
+  activeStoryIndex = index;
   sceneState.setState(step.settings);
   applyCameraPreset(step.cameraPreset);
 }
