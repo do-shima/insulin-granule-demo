@@ -1,9 +1,9 @@
 import './style.css';
 import * as THREE from 'three';
 import { granuleCount } from './biology/betaCellModel';
+import { GranuleSystem } from './objects/GranuleSystem';
 import { createBetaCellShell } from './objects/betaCellShell';
 import { createGolgiRegion } from './objects/golgiRegion';
-import { createGranulePlaceholders } from './objects/granulePlaceholders';
 import { createMembraneRing } from './objects/membraneRing';
 import { createNucleus } from './objects/nucleus';
 import { createSceneContext } from './scene/createSceneContext';
@@ -16,10 +16,8 @@ scene.add(createNucleus());
 scene.add(createGolgiRegion());
 scene.add(createMembraneRing());
 
-const granules = createGranulePlaceholders();
-scene.add(granules.shellMesh);
-scene.add(granules.haloMesh);
-scene.add(granules.coreMesh);
+const granules = new GranuleSystem();
+scene.add(granules);
 
 createSceneNote();
 createSceneInfo(granuleCount);

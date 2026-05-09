@@ -8,7 +8,7 @@ export const cellRadii = {
 
 export const nucleusPosition = new THREE.Vector3(-4.0, 0.0, 0.0);
 export const nucleusRadius = 4.2;
-export const granuleCount = 500;
+export const granuleCount = 800;
 
 export function isInsideCell(point: THREE.Vector3): boolean {
   const normalized =
